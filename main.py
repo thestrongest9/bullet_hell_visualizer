@@ -60,7 +60,11 @@ class Entity:
         self.velocity_x = 0
         self.velocity_y = 0
         self.rect = Rectangle(Point(self.x1, self.y1), Point(self.x2, self.y2)) #allows for drawing
-        self.rect.setFill("red")
+        # self.rect.setFill("red")
+        if self.name == "player": #set colors differently for players and bullets.
+            self.rect.setFill("blue")
+        else:
+            self.rect.setFill("red")
         self.rect.draw(window)
         self.move_list = [] #cool ability to rewind!
 
