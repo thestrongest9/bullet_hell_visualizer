@@ -5,91 +5,11 @@ from graphics import * #very basic graphics API #NOTE: Remember to do "pip insta
 import sys, os, pygame, re, random
 import numpy as np
 from copy import copy, deepcopy
-from entity import Entity
-
+from entity import Entity, Spawner
 
 #GLOBALS
 SCREEN_HEIGHT = 448 #These are just the Touhou numbers adapted directly
 SCREEN_WIDTH = 384
-# window = GraphWin("Bullet-hell Simulation", SCREEN_WIDTH, SCREEN_HEIGHT);
-
-#Current Goal: Decouple rendering and input from base game logic.
-#Make it so that the final rendering part is a separate modular component.
-
-
-
-# This spawns bullet -- for now just have a very simple spawning pattern
-class Spawner:
-    def __init__(self, x, y, width=5, height=5):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.bullets = []  # List to hold all the bullets
-        
-    def spawn_circular_bullets(self, num_bullets, speed):
-        angle_step = 360 / num_bullets
-        #list of spawned bullets
-        spawned_bullets = []
-        for i in range(num_bullets):
-            # Calculate angle in radians
-            angle = math.radians(i * angle_step)
-            # Calculate the velocity components for the bullet in the x and y directions
-            bullet_velocity_x = math.cos(angle) * speed
-            bullet_velocity_y = math.sin(angle) * speed
-            # Create a bullet entity at the center (self.x, self.y) with initial velocity
-            bullet = Entity("Bullet", self.x, self.y, self.width, self.height, color="blue")  # Simple bullet size (5x5)
-            bullet.velocity_x = bullet_velocity_x
-            bullet.velocity_y = bullet_velocity_y
-            # self.bullets.append(bullet)
-            spawned_bullets.append(bullet)
-            print(f"Bullet spawned at angle {i * angle_step}° with velocity ({bullet_velocity_x}, {bullet_velocity_y})")
-        return spawned_bullets
-
-    def update(self, rewind=False):
-        # Update each bullet's position based on its velocity
-        if rewind == False:
-            for bullet in self.bullets:
-                bullet.movement(bullet.velocity_x, bullet.velocity_y)
-        else:
-            for bullet in self.bullets:
-                bullet.rewind()
-
-    def spawner_detect_collision(self, other):
-        # Check colision for each bullet
-        for bullet in self.bullets:
-            bullet.aabb(other)
-
-    def movement(self, dx, dy, rewind=False):
-        #add functionality for rewinding
-        if rewind == False:
-            self.move_list.append((dx, dy)) #add to move list if not rewinding
-        else:
-            if self.move_list != []: #if not empty
-                dx, dy = self.move_list.pop(-1) #pop end
-                #reverse the movement
-                dx = -dx
-                dy = -dy
-            else:
-                dx, dy = (0, 0)
-
-        # Move position (center)
-        self.x += dx
-        self.y += dy
-        # Adjust collision boxes
-        self.x1 = self.x - self.width / 2
-        self.x2 = self.x + self.width / 2
-        self.y1 = self.y - self.height / 2
-        self.y2 = self.y + self.height / 2
-        # Move visual representation
-        self.rect.move(dx, dy)
-
-    def rewind(self):
-        self.movement(0, 0, rewind=True) #rewind
-
-    def execute_command(self):
-        pass
-
 
 def parse_input(Player):
     CMD_INPUT = input("ENTER COMMAND HERE: ")  # accept input until stop
@@ -283,7 +203,7 @@ def game_collision(player, objects):
 
 def main():
 
-    MODE = "GRAPHICS" #"GRAPHICS"
+    MODE = "INPUT" #"GRAPHICS"
 
     #initialize render(s)
     if MODE == "GRAPHICS":
