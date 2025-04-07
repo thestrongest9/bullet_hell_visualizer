@@ -91,7 +91,9 @@ class Spawner:
         pass
 
 
-def parse_input(CMD_INPUT, Player):
+def parse_input(Player):
+    CMD_INPUT = input("ENTER COMMAND HERE: ")  # accept input until stop
+
     CMD_INPUT = CMD_INPUT.upper() #make inputs uppercase
 
     #create dictionary that returns parsed values of input
@@ -151,7 +153,11 @@ def renderer_pygame(objects):
 def player_input():
     #manual control for game
     #used only in pygame rendering mode
-    pass
+
+    #NOTE: this return dictionary should be in the exact same format as the one in parse_input().
+    dictionary = {"REWIND":False, "TICKS":None, "PLAYER_MOVEMENT":(0, 0)}
+    
+    return dictionary
 
 def cvoa_algo(player, objects):
     #Constrained Velocity Obstacle Algorithm (misnomer, but whatever)
@@ -167,7 +173,7 @@ def lvl_generator():
     pass
 
 #Simulate movement for all objects + player in game
-#FIXME: Add rewind functionality
+#CHECK: If rewind functionality properly applied
 def movement(inputs, player, objects):
     #inputs should be a dictionary value, returned from parse_input()
     #move player
@@ -225,19 +231,13 @@ def main():
     game_objects.append(Player)
     game_objects.append(bullet_spawner)
 
-    REWIND = False
-
     TICKS = 20
 
-    while CMD_INPUT != "END":
+    while CMD_INPUT != "END": #game loop
         #Renderer 
         renderer_graphics(Player, game_objects, window)
-
-        REWIND = False
-        CMD_INPUT = input("ENTER COMMAND HERE: ")  # accept input until stop
         
-        command_dict = parse_input(CMD_INPUT, Player)
-        REWIND = command_dict["REWIND"]
+        command_dict = parse_input(Player)
         if command_dict["TICKS"] != None:
             TICKS = command_dict["TICKS"]
             continue #restart with new tick rate
@@ -245,7 +245,6 @@ def main():
         #for tick in ticks: #simulate command for certain amount of ticks
         for tick in range(TICKS):
             movement(command_dict, Player, game_objects)
-
             #Simluate collision
             game_collision(Player, game_objects)
 
