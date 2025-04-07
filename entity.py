@@ -94,10 +94,13 @@ class Entity:
         #Move visual representation (graphics.py)
         self.rect.move(dx, dy)
         # print(dx, dy)
-        #Move visual representation (pygame)
-        # self.pygame_rect.move_ip(dx, dy)
-        self.pygame_rect.update((self.x1, self.y1), (self.width, self.height))
-        # self.pygame_rect.move
+        
+        #NOTE:  Below is strange. Because values being set aren't integers, the rendering is having trouble showing the results
+        #       Possibly could lead to results where what is shown and said by the computer is different, which is bad. Just keep the float-integer issue in mind. 
+        self.pygame_rect.update((self.x1, self.y1), (self.width, self.height)) 
+        #Because the movements (for the bullets) aren't just integers, the regular move_ip (move in-place) doesn't function properly with Pygame's renderer.
+        #Most likely something to do with pixel coordinates?
+        #self.pygame_rect.move_ip(dx, dy)
 
         
 
