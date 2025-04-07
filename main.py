@@ -169,16 +169,29 @@ def lvl_generator():
 #Simulate movement for all objects + player in game
 #FIXME: Add rewind functionality
 def movement(inputs, player, objects):
-    x, y = inputs
+    #inputs should be a dictionary value, returned from parse_input()
     #move player
-    if player == Entity:
-        player.movement(x, y)
+    if type(player) is Entity: #do player movement stuff
+        if inputs["REWIND"]: #rewind functionality
+            player.rewind()
+        else:
+            x, y = inputs["PLAYER_MOVEMENT"]
+            player.movement(x, y)
     #move all other objects
     for object in objects:
         if type(object) is Entity: #bullets and misc
-            object.movement(object.velocity_x, object.velocity_y)
+            if object.name == "player": #skip player
+                continue
+            else: #check everything else
+                if inputs["REWIND"]:
+                    object.rewind()
+                else:
+                    object.movement(object.velocity_x, object.velocity_y)
         elif type(object) is Spawner: #spawners
-            object.update()
+            if inputs["REWIND"]:
+                object.update(rewind=True)
+            else:
+                object.update()
 
 def game_collision(player, objects):
     #collision detection for objects in the game
@@ -231,25 +244,7 @@ def main():
 
         #for tick in ticks: #simulate command for certain amount of ticks
         for tick in range(TICKS):
-            for game_object in game_objects:
-                if type(game_object) is Entity:
-                    #Simulate movement
-                    if game_object != Player:
-                        if REWIND == False: #Check if rewinding
-                            game_object.movement(game_object.velocity_x, game_object.velocity_y)
-                        else:
-                            game_object.rewind()
-                    else: #move player
-                        if REWIND == False:
-                            dx, dy = command_dict["PLAYER_MOVEMENT"]
-                            game_object.movement(dx, dy)
-                        else:
-                            game_object.rewind()
-                elif type(game_object) is Spawner: #if spawner
-                    if REWIND == False: #if rewinding
-                        game_object.update()  # Update all bullets on each command
-                    else:
-                        game_object.update(rewind=True)  # Update all bullets on each command (and rewind simulation)
+            movement(command_dict, Player, game_objects)
 
             #Simluate collision
             game_collision(Player, game_objects)
