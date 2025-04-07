@@ -2,10 +2,21 @@ import math
 from graphics import * #very basic graphics API #NOTE: Remember to do "pip install graphics.py"
 #graphics.py documentation: https://mcsp.wartburg.edu/zelle/python/graphics/graphics.pdf
 
+import sys, os, pygame, re, random
+import numpy as np
+from copy import copy, deepcopy
+from entity import Entity
+
+
 #GLOBALS
 SCREEN_HEIGHT = 448 #These are just the Touhou numbers adapted directly
 SCREEN_WIDTH = 384
 window = GraphWin("Bullet-hell Simulation", SCREEN_WIDTH, SCREEN_HEIGHT);
+
+#Current Goal: Decouple rendering and input from base game logic.
+#Make it so that the final rendering part is a separate modular component.
+
+
 
 # This spawns bullet -- for now just have a very simple spawning pattern
 class Spawner:
@@ -44,56 +55,6 @@ class Spawner:
         # Check colision for each bullet
         for bullet in self.bullets:
             bullet.aabb(other)
-
-#Entity includes the Player + Projectiles (Keep if simple)
-class Entity:
-    def __init__(self, name, x, y, height, width, color="red"):
-        self.name = name
-        self.x = x
-        self.y = y
-        self.height = height
-        self.width = width
-        self.x1 = x - width / 2
-        self.x2 = x + width / 2
-        self.y1 = y - height / 2
-        self.y2 = y + height / 2
-        self.velocity_x = 0
-        self.velocity_y = 0
-        self.rect = Rectangle(Point(self.x1, self.y1), Point(self.x2, self.y2)) #allows for drawing
-        # self.rect.setFill("red")
-        if self.name == "player": #set colors differently for players and bullets.
-            self.rect.setFill("blue")
-        else:
-            self.rect.setFill("red")
-        self.rect.draw(window)
-        self.move_list = [] #cool ability to rewind!
-
-    # def draw(self, win):
-    #     self.rect.draw(win)
-
-    def aabb(self, other):
-
-        #Circular instead of AABB
-        #Maybe should add radius component?
-        # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
-        if math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)) < self.height: #FIXME: circular distance isn't working
-            return True
-        else:
-            return False
-
-
-        # # Ensure both objects have the necessary attributes (bounding box coordinates)
-        # if not all(hasattr(other, attr) for attr in ['x1', 'y1', 'x2', 'y2']):
-        #     return None  # `other` doesn't have the necessary attributes for collision detection
-        
-        # # Check if there's an overlap on both the X and Y axes (AABB collision detection)
-        # if (self.x2 >= other.x1 and self.x1 <= other.x2 and
-        #     self.y2 >= other.y1 and self.y1 <= other.y2):
-        #     # Collision detected
-        #     print(f"Collision between {self.name} and {other.name}")
-        #     return True
-        # return False
-
 
     def movement(self, dx, dy, rewind=False):
         #add functionality for rewinding
@@ -168,6 +129,28 @@ def parse_input(CMD_INPUT, Player):
     return dictionary
 
 
+def render(objects):
+    #rendering loop for all objects
+    #should change depending on current modules used
+    pass
+
+def cvoa_algo(player, objects):
+    #Constrained Velocity Obstacle Algorithm (misnomer, but whatever)
+    #To be used for micro-dodging
+    pass
+
+def clustering(player, objects):
+    #Cluster algorithm to help with macrododging
+    pass
+
+def lvl_generator():
+    #Level generation component
+    pass
+
+def game_collision(player, objects):
+    #collision detection for objects in the game
+    pass
+
 
 def main():
     #Make some method of visual output (not sure on this...)
@@ -208,6 +191,8 @@ def main():
         for tick in range(TICKS):
             for game_object in game_objects:
                 if type(game_object) is Entity:
+                    #Draw the Entity
+                    game_object.draw(window)
                     #Simulate movement
                     if game_object != Player:
                         if REWIND == False: #Check if rewinding
