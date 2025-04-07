@@ -30,7 +30,9 @@ class Entity:
         # self.rect.draw(window)
         self.move_list = [] #cool ability to rewind!
 
-    def draw(self, win):
+    def draw_to(self, win):
+        print(self.name)
+        # self.rect.draw(win)
         if self.drawn == False:
             self.rect.draw(win)
             self.drawn = True
@@ -41,6 +43,7 @@ class Entity:
         #Maybe should add radius component?
         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
         if math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)) < self.height: #FIXME: circular distance isn't working
+            print(f"Collision between {self.name} and {other.name}")
             return True
         else:
             return False

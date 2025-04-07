@@ -29,6 +29,8 @@ class Spawner:
         
     def spawn_circular_bullets(self, num_bullets, speed):
         angle_step = 360 / num_bullets
+        #list of spawned bullets
+        spawned_bullets = []
         for i in range(num_bullets):
             # Calculate angle in radians
             angle = math.radians(i * angle_step)
@@ -39,8 +41,10 @@ class Spawner:
             bullet = Entity("Bullet", self.x, self.y, self.width, self.height, color="blue")  # Simple bullet size (5x5)
             bullet.velocity_x = bullet_velocity_x
             bullet.velocity_y = bullet_velocity_y
-            self.bullets.append(bullet)
+            # self.bullets.append(bullet)
+            spawned_bullets.append(bullet)
             print(f"Bullet spawned at angle {i * angle_step}° with velocity ({bullet_velocity_x}, {bullet_velocity_y})")
+        return spawned_bullets
 
     def update(self, rewind=False):
         # Update each bullet's position based on its velocity
@@ -129,9 +133,24 @@ def parse_input(CMD_INPUT, Player):
     return dictionary
 
 
-def render(objects):
-    #rendering loop for all objects
-    #should change depending on current modules used
+def renderer_graphics(player, objects, window):
+    #graphics.py based rendering
+    #used for automatic testing
+    #Draw the Entity
+    player.draw_to(window)
+    for object in objects:
+        if type(object) is Entity:
+            object.draw_to(window)
+    pass
+
+def renderer_pygame(objects):
+    #pygame renderer
+    #used for human input
+    pass
+
+def player_input():
+    #manual control for game
+    #used only in pygame rendering mode
     pass
 
 def cvoa_algo(player, objects):
@@ -147,9 +166,27 @@ def lvl_generator():
     #Level generation component
     pass
 
+#Simulate movement for all objects + player in game
+#FIXME: Add rewind functionality
+def movement(inputs, player, objects):
+    x, y = inputs
+    #move player
+    if player == Entity:
+        player.movement(x, y)
+    #move all other objects
+    for object in objects:
+        if type(object) is Entity: #bullets and misc
+            object.movement(object.velocity_x, object.velocity_y)
+        elif type(object) is Spawner: #spawners
+            object.update()
+
 def game_collision(player, objects):
     #collision detection for objects in the game
-    pass
+    for object in objects:
+        if type(object) is Entity and object.name != "player":
+            object.aabb(player)
+        elif type(object) is Spawner:
+            object.spawner_detect_collision(player)
 
 
 def main():
@@ -163,10 +200,12 @@ def main():
     bullet_spawner = Spawner(0, 0, 16, 16)
 
     # Example commands
-    bullet_spawner.spawn_circular_bullets(8, 1)  # Spawn 8 bullets at the spawner position, with speed of 2 units
-    bullet_spawner.update()  # Update all bullets' positions
+    # bullet_spawner.spawn_circular_bullets(8, 1)  # Spawn 8 bullets at the spawner position, with speed of 2 units
+    # bullet_spawner.update()  # Update all bullets' positions
 
+    #game_objects should contain all bullets, spawners, player.
     game_objects = [] #checking all game objects
+    game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
 
     Player = Entity("player", SCREEN_WIDTH/2, SCREEN_HEIGHT/2, 16, 16)
 
@@ -178,6 +217,9 @@ def main():
     TICKS = 20
 
     while CMD_INPUT != "END":
+        #Renderer 
+        renderer_graphics(Player, game_objects, window)
+
         REWIND = False
         CMD_INPUT = input("ENTER COMMAND HERE: ")  # accept input until stop
         
@@ -191,12 +233,10 @@ def main():
         for tick in range(TICKS):
             for game_object in game_objects:
                 if type(game_object) is Entity:
-                    #Draw the Entity
-                    game_object.draw(window)
                     #Simulate movement
                     if game_object != Player:
                         if REWIND == False: #Check if rewinding
-                            game_object.movement(self.velocity_x, self.velocity_y)
+                            game_object.movement(game_object.velocity_x, game_object.velocity_y)
                         else:
                             game_object.rewind()
                     else: #move player
@@ -212,14 +252,7 @@ def main():
                         game_object.update(rewind=True)  # Update all bullets on each command (and rewind simulation)
 
             #Simluate collision
-            for game_object in game_objects: 
-                if game_object != Player:
-                    if type(game_object) is Entity:
-                        #simulate collision
-                        game_object.aabb(Player)
-                    elif type(game_object) is Spawner:
-                        #simulate collision with all bullets of spawner
-                        game_object.spawner_detect_collision(Player)
+            game_collision(Player, game_objects)
 
 #just organizational things.
 if __name__ == '__main__':
