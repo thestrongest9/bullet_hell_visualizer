@@ -11,7 +11,7 @@ from entity import Entity
 #GLOBALS
 SCREEN_HEIGHT = 448 #These are just the Touhou numbers adapted directly
 SCREEN_WIDTH = 384
-window = GraphWin("Bullet-hell Simulation", SCREEN_WIDTH, SCREEN_HEIGHT);
+# window = GraphWin("Bullet-hell Simulation", SCREEN_WIDTH, SCREEN_HEIGHT);
 
 #Current Goal: Decouple rendering and input from base game logic.
 #Make it so that the final rendering part is a separate modular component.
@@ -134,6 +134,9 @@ def parse_input(Player):
 
     return dictionary
 
+def graphics_init():
+    window = GraphWin("Bullet-hell Simulation", SCREEN_WIDTH, SCREEN_HEIGHT)
+    return window
 
 def renderer_graphics(player, objects, window):
     #graphics.py based rendering
@@ -145,10 +148,32 @@ def renderer_graphics(player, objects, window):
             object.draw_to(window)
     pass
 
-def renderer_pygame(objects):
+def pygame_init():
+    #function for initializing pygame functionality
+
+    surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    pygame.init()
+    pygame.display.init()
+    clock = pygame.time.Clock()
+    
+    return surface, clock
+
+def renderer_pygame(surface, clock, player, objects):
     #pygame renderer
     #used for human input
-    pass
+    surface.fill((0,0,0,0)) #Clear screen each frame
+
+    if type(player) is Entity:
+        pygame.draw.rect(surface, player.pygame_color, player.pygame_rect)
+
+    for object in objects:
+        if type(object) is Entity:
+            pygame.draw.rect(surface, object.pygame_color, object.pygame_rect)
+    
+    clock.tick(30) #30 FPS
+    pygame.display.update()
+
 
 def player_input():
     #manual control for game
@@ -156,6 +181,54 @@ def player_input():
 
     #NOTE: this return dictionary should be in the exact same format as the one in parse_input().
     dictionary = {"REWIND":False, "TICKS":None, "PLAYER_MOVEMENT":(0, 0)}
+
+    x, y = 0, 0
+    down = (0,0)
+    up = (0,0)
+    left = (0,0)
+    right = (0,0)
+    #FIXME: Input completely messed up. Need to fix this.
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()   
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_w:
+                x,y = (0,1)
+            if event.key == pygame.K_a:
+                pass
+            if event.key == pygame.K_s:
+                x,y = (0,-1)
+            if event.key == pygame.K_d:
+                pass
+    keys = pygame.key.get_pressed()
+    
+    if keys[pygame.K_UP]:
+        up = (0, -1)
+    else:
+        up = (0, 0)
+
+    if keys[pygame.K_LEFT]:
+        left = (-1, 0)
+    else:
+        left = (0, 0)
+    
+    if keys[pygame.K_DOWN]:
+        down = (0,  1)
+    else:
+        down = (0, 0)
+
+    if keys[pygame.K_RIGHT]:
+        right = (1,  0)
+    else:
+        right = (0, 0)
+
+    multiplier = 2
+    if keys[pygame.K_LSHIFT]:
+        multiplier = 1
+
+    # print(up, left, right, down)
+    dictionary["PLAYER_MOVEMENT"] = tuple(map(lambda i, j, k, l: (i+j+k+l)*multiplier, up, down, left, right))
     
     return dictionary
 
@@ -209,6 +282,15 @@ def game_collision(player, objects):
 
 
 def main():
+
+    MODE = "GRAPHICS" #"GRAPHICS"
+
+    #initialize render(s)
+    if MODE == "GRAPHICS":
+        window = graphics_init() #graphics.py renderer
+    if MODE == "INPUT":
+        surface, clock = pygame_init() #pygame renderer
+
     #Make some method of visual output (not sure on this...)
     CMD_INPUT = ""
 
@@ -231,22 +313,33 @@ def main():
     game_objects.append(Player)
     game_objects.append(bullet_spawner)
 
-    TICKS = 20
+    TICKS = 1
 
     while CMD_INPUT != "END": #game loop
         #Renderer 
-        renderer_graphics(Player, game_objects, window)
         
-        command_dict = parse_input(Player)
-        if command_dict["TICKS"] != None:
-            TICKS = command_dict["TICKS"]
-            continue #restart with new tick rate
+        if MODE == "GRAPHICS":
+            renderer_graphics(Player, game_objects, window)
+        if MODE == "INPUT":
+            renderer_pygame(surface, clock, Player, game_objects)
+        
+        if MODE == "GRAPHICS":
+            command_dict = parse_input(Player)
+            if command_dict["TICKS"] != None:
+                TICKS = command_dict["TICKS"]
+                continue #restart with new tick rate
+        if MODE == "INPUT":
+            command_dict = player_input()
+
+        # print(command_dict)
 
         #for tick in ticks: #simulate command for certain amount of ticks
         for tick in range(TICKS):
             movement(command_dict, Player, game_objects)
             #Simluate collision
             game_collision(Player, game_objects)
+
+        # renderer_pygame(surface, clock, Player, game_objects)
 
 #just organizational things.
 if __name__ == '__main__':

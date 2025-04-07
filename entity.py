@@ -18,15 +18,23 @@ class Entity:
         self.y2 = y + height / 2
         self.velocity_x = 0
         self.velocity_y = 0
+        
+        #Rect used for graphics.py rendering
         self.rect = Rectangle(Point(self.x1, self.y1), Point(self.x2, self.y2)) #allows for drawing
         
+        #Pygame rect: https://www.pygame.org/docs/ref/rect.html
+        #Pygame.rect(left, top, width, height)
+        self.pygame_rect = pygame.Rect(self.x1, self.y1, self.width, self.height)
+
         self.drawn = False
         
         # self.rect.setFill("red")
-        if self.name == "player": #set colors differently for players and bullets.
-            self.rect.setFill("blue")
+        if self.name == 'player': #set colors differently for players and bullets.
+            self.rect.setFill('blue')
+            self.pygame_color = pygame.Color('blue')
         else:
-            self.rect.setFill("red")
+            self.rect.setFill('red')
+            self.pygame_color = pygame.Color('red')
         # self.rect.draw(window)
         self.move_list = [] #cool ability to rewind!
 
@@ -75,16 +83,23 @@ class Entity:
             else:
                 dx, dy = (0, 0)
 
-        # Move position (center)
+        #Move position (center)
         self.x += dx
         self.y += dy
-        # Adjust collision boxes
+        #Adjust collision boxes
         self.x1 = self.x - self.width / 2
         self.x2 = self.x + self.width / 2
         self.y1 = self.y - self.height / 2
         self.y2 = self.y + self.height / 2
-        # Move visual representation
+        #Move visual representation (graphics.py)
         self.rect.move(dx, dy)
+        # print(dx, dy)
+        #Move visual representation (pygame)
+        # self.pygame_rect.move_ip(dx, dy)
+        self.pygame_rect.update((self.x1, self.y1), (self.width, self.height))
+        # self.pygame_rect.move
+
+        
 
     def rewind(self):
         self.movement(0, 0, rewind=True) #rewind
