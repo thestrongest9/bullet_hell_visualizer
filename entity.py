@@ -4,7 +4,8 @@ import sys, os, pygame, re, random
 import numpy as np
 from copy import copy, deepcopy
 
-#Entity includes the Player + Projectiles (Keep it simple)
+
+# Entity includes the Player + Projectiles (Keep it simple)
 class Entity:
     def __init__(self, name, x, y, height, width, color="red"):
         self.name = name
@@ -18,25 +19,27 @@ class Entity:
         self.y2 = y + height / 2
         self.velocity_x = 0
         self.velocity_y = 0
-        
-        #Rect used for graphics.py rendering
-        self.rect = Rectangle(Point(self.x1, self.y1), Point(self.x2, self.y2)) #allows for drawing
-        
-        #Pygame rect: https://www.pygame.org/docs/ref/rect.html
-        #Pygame.rect(left, top, width, height)
+
+        # Rect used for graphics.py rendering
+        self.rect = Rectangle(
+            Point(self.x1, self.y1), Point(self.x2, self.y2)
+        )  # allows for drawing
+
+        # Pygame rect: https://www.pygame.org/docs/ref/rect.html
+        # Pygame.rect(left, top, width, height)
         self.pygame_rect = pygame.Rect(self.x1, self.y1, self.width, self.height)
 
         self.drawn = False
-        
+
         # self.rect.setFill("red")
-        if self.name == 'player': #set colors differently for players and bullets.
-            self.rect.setFill('blue')
-            self.pygame_color = pygame.Color('blue')
+        if self.name == "player":  # set colors differently for players and bullets.
+            self.rect.setFill("blue")
+            self.pygame_color = pygame.Color("blue")
         else:
-            self.rect.setFill('red')
-            self.pygame_color = pygame.Color('red')
+            self.rect.setFill("red")
+            self.pygame_color = pygame.Color("red")
         # self.rect.draw(window)
-        self.move_list = [] #cool ability to rewind!
+        self.move_list = []  # cool ability to rewind!
 
     def draw_to(self, win):
         print(self.name)
@@ -46,21 +49,22 @@ class Entity:
             self.drawn = True
 
     def aabb(self, other):
-
-        #Circular instead of AABB
-        #Maybe should add radius component?
+        # Circular instead of AABB
+        # Maybe should add radius component?
         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
-        if math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)) < self.height: #FIXME: circular distance isn't working
+        if (
+            math.sqrt(math.pow(self.x - other.x, 2) + math.pow(self.y - other.y, 2))
+            < self.height
+        ):  # FIXME: circular distance isn't working
             print(f"Collision between {self.name} and {other.name}")
             return True
         else:
             return False
 
-
         # # Ensure both objects have the necessary attributes (bounding box coordinates)
         # if not all(hasattr(other, attr) for attr in ['x1', 'y1', 'x2', 'y2']):
         #     return None  # `other` doesn't have the necessary attributes for collision detection
-        
+
         # # Check if there's an overlap on both the X and Y axes (AABB collision detection)
         # if (self.x2 >= other.x1 and self.x1 <= other.x2 and
         #     self.y2 >= other.y1 and self.y1 <= other.y2):
@@ -69,46 +73,44 @@ class Entity:
         #     return True
         # return False
 
-
     def movement(self, dx, dy, rewind=False):
-        #add functionality for rewinding
+        # add functionality for rewinding
         if rewind == False:
-            self.move_list.append((dx, dy)) #add to move list if not rewinding
+            self.move_list.append((dx, dy))  # add to move list if not rewinding
         else:
-            if self.move_list != []: #if not empty
-                dx, dy = self.move_list.pop(-1) #pop end
-                #reverse the movement
+            if self.move_list != []:  # if not empty
+                dx, dy = self.move_list.pop(-1)  # pop end
+                # reverse the movement
                 dx = -dx
                 dy = -dy
             else:
                 dx, dy = (0, 0)
 
-        #Move position (center)
+        # Move position (center)
         self.x += dx
         self.y += dy
-        #Adjust collision boxes
+        # Adjust collision boxes
         self.x1 = self.x - self.width / 2
         self.x2 = self.x + self.width / 2
         self.y1 = self.y - self.height / 2
         self.y2 = self.y + self.height / 2
-        #Move visual representation (graphics.py)
+        # Move visual representation (graphics.py)
         self.rect.move(dx, dy)
         # print(dx, dy)
-        
-        #NOTE:  Below is strange. Because values being set aren't integers, the rendering is having trouble showing the results
-        #       Possibly could lead to results where what is shown and said by the computer is different, which is bad. Just keep the float-integer issue in mind. 
-        self.pygame_rect.update((self.x1, self.y1), (self.width, self.height)) 
-        #Because the movements (for the bullets) aren't just integers, the regular move_ip (move in-place) doesn't function properly with Pygame's renderer.
-        #Most likely something to do with pixel coordinates?
-        #self.pygame_rect.move_ip(dx, dy)
 
-        
+        # NOTE:  Below is strange. Because values being set aren't integers, the rendering is having trouble showing the results
+        #       Possibly could lead to results where what is shown and said by the computer is different, which is bad. Just keep the float-integer issue in mind.
+        self.pygame_rect.update((self.x1, self.y1), (self.width, self.height))
+        # Because the movements (for the bullets) aren't just integers, the regular move_ip (move in-place) doesn't function properly with Pygame's renderer.
+        # Most likely something to do with pixel coordinates?
+        # self.pygame_rect.move_ip(dx, dy)
 
     def rewind(self):
-        self.movement(0, 0, rewind=True) #rewind
+        self.movement(0, 0, rewind=True)  # rewind
 
     def execute_command(self):
         pass
+
 
 # This spawns bullet -- for now just have a very simple spawning pattern
 class Spawner:
@@ -118,10 +120,10 @@ class Spawner:
         self.width = width
         self.height = height
         self.bullets = []  # List to hold all the bullets
-        
+
     def spawn_circular_bullets(self, num_bullets, speed):
         angle_step = 360 / num_bullets
-        #list of spawned bullets
+        # list of spawned bullets
         spawned_bullets = []
         for i in range(num_bullets):
             # Calculate angle in radians
@@ -130,12 +132,16 @@ class Spawner:
             bullet_velocity_x = math.cos(angle) * speed
             bullet_velocity_y = math.sin(angle) * speed
             # Create a bullet entity at the center (self.x, self.y) with initial velocity
-            bullet = Entity("Bullet", self.x, self.y, self.width, self.height, color="blue")  # Simple bullet size (5x5)
+            bullet = Entity(
+                "Bullet", self.x, self.y, self.width, self.height, color="blue"
+            )  # Simple bullet size (5x5)
             bullet.velocity_x = bullet_velocity_x
             bullet.velocity_y = bullet_velocity_y
             # self.bullets.append(bullet)
             spawned_bullets.append(bullet)
-            print(f"Bullet spawned at angle {i * angle_step}° with velocity ({bullet_velocity_x}, {bullet_velocity_y})")
+            print(
+                f"Bullet spawned at angle {i * angle_step}° with velocity ({bullet_velocity_x}, {bullet_velocity_y})"
+            )
         return spawned_bullets
 
     def update(self, rewind=False):
@@ -153,13 +159,13 @@ class Spawner:
             bullet.aabb(other)
 
     def movement(self, dx, dy, rewind=False):
-        #add functionality for rewinding
+        # add functionality for rewinding
         if rewind == False:
-            self.move_list.append((dx, dy)) #add to move list if not rewinding
+            self.move_list.append((dx, dy))  # add to move list if not rewinding
         else:
-            if self.move_list != []: #if not empty
-                dx, dy = self.move_list.pop(-1) #pop end
-                #reverse the movement
+            if self.move_list != []:  # if not empty
+                dx, dy = self.move_list.pop(-1)  # pop end
+                # reverse the movement
                 dx = -dx
                 dy = -dy
             else:
@@ -177,7 +183,7 @@ class Spawner:
         self.rect.move(dx, dy)
 
     def rewind(self):
-        self.movement(0, 0, rewind=True) #rewind
+        self.movement(0, 0, rewind=True)  # rewind
 
     def execute_command(self):
         pass
