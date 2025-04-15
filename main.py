@@ -120,7 +120,116 @@ def player_input():
 def cvoa_algo(player, objects):
     # Constrained Velocity Obstacle Algorithm (misnomer, but whatever)
     # To be used for micro-dodging
-    pass
+
+    #these possible velocities should take into account
+    #player can move in 8 directions
+    #FIXME: player can increase or decrease speed (pressing shift, x2)
+    #player can stand still (do nothing)
+    multiplier = 2
+    #FIXME: Need to have (0, 0) option at top. or else starts moving. Need to fix somehow.
+    possible_velocities = [
+        ( 0 * multiplier,  0 * multiplier), #stand still
+        ( 0 * multiplier, -1 * multiplier), #up
+        (-1 * multiplier, -1 * multiplier), #upleft
+        ( 1 * multiplier, -1 * multiplier), #upright
+        ( 0 * multiplier,  1 * multiplier), #down
+        (-1 * multiplier,  1 * multiplier), #downleft
+        ( 1 * multiplier,  1 * multiplier), #downright
+        (-1 * multiplier,  0 * multiplier), #left
+        ( 1 * multiplier,  0 * multiplier), #right
+        # ( 0 * multiplier,  0 * multiplier), #stand still
+        #Without multiplier
+        ( 0, -1), #up
+        (-1, -1), #upleft
+        ( 1, -1), #upright
+        ( 0,  1), #down
+        (-1,  1), #downleft
+        ( 1,  1), #downright
+        (-1,  0), #left
+        ( 1,  0), #right
+    ]
+    
+    #create a dictionary of smallest distance direction needs to go to collide with something
+    dir_collision = dict()
+    for each in possible_velocities:
+        dir_collision[each] = float("inf")
+    
+    #somehow also need to choose "best available" if no good decisions are available
+    # safe_velocities = possible_velocities.copy()
+    max_t_velocity = possible_velocities[random.randint(0, len(possible_velocities)-1)]
+    
+    CHECK_FRAMES = 20 #amount of frames to check for collision
+
+    #remove any velocity that would cause collision
+    for ob in objects:
+        if type(ob) is Entity:
+            if ob.name != "player":
+                #FIXME: When working on frame time divided version, need to set distance to very high number (need to take into account all bullets)
+                if True:#ob.get_distance(player) <= 128.0: #only consider obstacles close enough
+                # if ob.get_distance(player) <= 256:#128.0: #only consider obstacles close enough
+                    for v in possible_velocities:
+                        #get how many frames it is safe to move in direction (velocity) v.
+                        # no_collision_frames = ob.check_steps_ahead(CHECK_FRAMES, player, v)
+                        no_collision_frames = player.check_steps_ahead(CHECK_FRAMES, ob, v)
+                        print("num of frames", no_collision_frames)
+                        if dir_collision[v] > no_collision_frames: #get the minimum amount of frames for that direction, based on collision detection with the obstacle
+                            dir_collision[v] = no_collision_frames
+
+    max_frames = 0
+
+    print("GREATEST", dir_collision)
+    # safe_velocities = {}
+
+    #choose from some safe velocities
+    safe_velocities = {}
+    GREATEST_POSSIBLE_FRAMES = None
+    dist = float("inf")
+    for direction, frames in dir_collision.items():
+        if frames not in safe_velocities:
+            safe_velocities[frames] = [direction]
+        else:
+            safe_velocities[frames].append(direction)
+        
+        #check if greatest number of frames possible from current set of directions
+        if GREATEST_POSSIBLE_FRAMES == None:
+            GREATEST_POSSIBLE_FRAMES = frames
+        else:
+            if frames > GREATEST_POSSIBLE_FRAMES:
+                GREATEST_POSSIBLE_FRAMES = frames
+
+    # print("GREATEST", dir_collision)
+    if GREATEST_POSSIBLE_FRAMES != None:
+        # print(len(safe_velocities))
+        # max_t_velocity = safe_velocities[random.randint(0, len(safe_velocities)-1)]
+
+        # #choose closest to center
+        # for dir in safe_velocities[GREATEST_POSSIBLE_FRAMES]:
+        #     dir_x, dir_y = dir
+        #     #manhattan distance
+        #     # y_axis * 2 => to emphasize y-axis movement more over x, otherwise when same good move appears, gets stuck beneath bullet and collides at bottom of screen.
+        #     temp = abs(player.rect.x + dir_x - 320) + abs(player.rect.y + dir_y - 240) * 2 
+        #     if temp <= dist:
+        #         max_t_velocity = dir
+        #         dist = temp
+        
+        #pick randomly
+        max_t_velocity = safe_velocities[GREATEST_POSSIBLE_FRAMES][random.randint(0, len(safe_velocities[GREATEST_POSSIBLE_FRAMES])-1)]
+    
+    max_frames = dir_collision[max_t_velocity]
+
+    # x, y = max_t_velocity #FIXME: Better way to do this?
+    # print(max_t_velocity)
+
+    if max_frames > CHECK_FRAMES: #this means that the max_Frames = infinity
+        max_frames = 0
+    # else:
+    #     max_frames = GREATEST_POSSIBLE_FRAMES
+
+    # return (x, y, max_frames) #return x, y, and frame count (frame count so that player AI can switch to different velocity after current one is no longer safe)
+
+    dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": max_frames}
+    return dictionary
+
 
 
 def clustering(player, objects):
@@ -203,6 +312,10 @@ def main():
 
     TICKS = 1
 
+    CVOA_TICKS = -1
+
+    command_dict = {}
+
     while CMD_INPUT != "END":  # game loop
         # Renderer
 
@@ -217,7 +330,16 @@ def main():
                 TICKS = command_dict["TICKS"]
                 continue  # restart with new tick rate
         if MODE == "INPUT":
-            command_dict = player_input()
+            # command_dict = player_input()
+            if CVOA_TICKS == -1:
+                command_dict = cvoa_algo(Player, game_objects)
+            if "MAX_FRAMES" in command_dict:
+                if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
+                    print("CVOA_TICKS", CVOA_TICKS)
+                    command_dict = cvoa_algo(Player, game_objects)
+                    CVOA_TICKS = 0
+            CVOA_TICKS += 1
+            
 
         # print(command_dict)
 

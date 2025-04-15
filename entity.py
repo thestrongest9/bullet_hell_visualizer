@@ -56,7 +56,7 @@ class Entity:
             math.sqrt(math.pow(self.x - other.x, 2) + math.pow(self.y - other.y, 2))
             < self.height
         ):  # FIXME: circular distance isn't working
-            print(f"Collision between {self.name} and {other.name}")
+            # print(f"Collision between {self.name} and {other.name}")
             return True
         else:
             return False
@@ -111,18 +111,24 @@ class Entity:
     #t -> steps
     #other -> the other type(Entity) to compare against
     def check_steps_ahead(self, t, other, velocity):
-        #Create duplicate objects that are the same but just simulated ahead
-        self_copy = copy(self)
-        other_copy = copy(other)
-
+        
         potential_x, potential_y = velocity
+
+        #Create duplicate objects that are the same but just simulated ahead
+        self_copy = deepcopy(self)
+        other_copy = deepcopy(other)
+        # self_copy = collision_component(self.x, self.y, self.height, self.width, potential_x, potential_y)
+        # other_copy = collision_component(other.x, other.y, other.height, other.width, other.velocity_x, other.velocity_y)
+
         #simulate these copies for t-steps
         for t_ in range(t):
             #Move player and other by their velocity
             self_copy.movement(potential_x, potential_y)
             other_copy.movement(other_copy.velocity_x, other_copy.velocity_y)
             #Check to see if they collide
-            if self_copy.aabb(other_copy):
+            # print(t_)
+            if self_copy.aabb(other_copy) == True:
+                # print("RETURN -1")
                 return t_-1
         
         return t
@@ -132,6 +138,76 @@ class Entity:
 
     def execute_command(self):
         pass
+
+#Potentially might be a good idea to separate collision component into separate object.
+#This will just make checking future steps ahead easier.
+# class collision_component:
+#     def __init__(self, x, y, height, width, velocity_x, velocity_y):
+#         self.x = x
+#         self.y = y
+#         self.height = height
+#         self.width = width
+#         self.x1 = x - width / 2
+#         self.x2 = x + width / 2
+#         self.y1 = y - height / 2
+#         self.y2 = y + height / 2
+#         self.velocity_x = velocity_x
+#         self.velocity_y = velocity_y
+
+#         # Rect used for graphics.py rendering
+#         self.rect = Rectangle(
+#             Point(self.x1, self.y1), Point(self.x2, self.y2)
+#         )  # allows for drawing
+
+#         # Pygame rect: https://www.pygame.org/docs/ref/rect.html
+#         # Pygame.rect(left, top, width, height)
+#         self.pygame_rect = pygame.Rect(self.x1, self.y1, self.width, self.height)
+
+#     def movement(self, dx, dy):
+#         # Move position (center)
+#         self.x += dx
+#         self.y += dy
+#         # Adjust collision boxes
+#         self.x1 = self.x - self.width / 2
+#         self.x2 = self.x + self.width / 2
+#         self.y1 = self.y - self.height / 2
+#         self.y2 = self.y + self.height / 2
+#         # Move visual representation (graphics.py)
+#         self.rect.move(dx, dy)
+#         # print(dx, dy)
+
+#         # NOTE:  Below is strange. Because values being set aren't integers, the rendering is having trouble showing the results
+#         #       Possibly could lead to results where what is shown and said by the computer is different, which is bad. Just keep the float-integer issue in mind.
+#         self.pygame_rect.update((self.x1, self.y1), (self.width, self.height))
+#         # Because the movements (for the bullets) aren't just integers, the regular move_ip (move in-place) doesn't function properly with Pygame's renderer.
+#         # Most likely something to do with pixel coordinates?
+#         # self.pygame_rect.move_ip(dx, dy)
+
+#     def aabb(self, other):
+#         # Circular instead of AABB
+#         # Maybe should add radius component?
+#         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
+#         # print("AABB VALUE", math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0)), self.height)
+#         if (
+#             math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
+#             < self.height
+#         ):  # FIXME: circular distance isn't working
+#             # print(f"Collision between {self.name} and {other.name}")
+#             return True
+#         else:
+#             return False
+
+#         # # Ensure both objects have the necessary attributes (bounding box coordinates)
+#         # if not all(hasattr(other, attr) for attr in ['x1', 'y1', 'x2', 'y2']):
+#         #     return None  # `other` doesn't have the necessary attributes for collision detection
+
+#         # # Check if there's an overlap on both the X and Y axes (AABB collision detection)
+#         # if (self.x2 >= other.x1 and self.x1 <= other.x2 and
+#         #     self.y2 >= other.y1 and self.y1 <= other.y2):
+#         #     # Collision detected
+#         #     # print(f"Collision between {self.name} and {other.name}")
+#         #     return True
+#         # return False
 
 
 # This spawns bullet -- for now just have a very simple spawning pattern
