@@ -105,6 +105,28 @@ class Entity:
         # Most likely something to do with pixel coordinates?
         # self.pygame_rect.move_ip(dx, dy)
 
+    
+    """Simulates collision detection for future steps"""
+    #args:
+    #t -> steps
+    #other -> the other type(Entity) to compare against
+    def check_steps_ahead(self, t, other, velocity):
+        #Create duplicate objects that are the same but just simulated ahead
+        self_copy = copy(self)
+        other_copy = copy(other)
+
+        potential_x, potential_y = velocity
+        #simulate these copies for t-steps
+        for t_ in range(t):
+            #Move player and other by their velocity
+            self_copy.movement(potential_x, potential_y)
+            other_copy.movement(other_copy.velocity_x, other_copy.velocity_y)
+            #Check to see if they collide
+            if self_copy.aabb(other_copy):
+                return t_-1
+        
+        return t
+
     def rewind(self):
         self.movement(0, 0, rewind=True)  # rewind
 
