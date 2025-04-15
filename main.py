@@ -312,7 +312,7 @@ def main():
 
     TICKS = 1
 
-    CVOA_TICKS = -1
+    CVOA_TICKS = -1 # Determines when new direction should be returned by CVOA. Without this output is chaotic.
 
     command_dict = {}
 
