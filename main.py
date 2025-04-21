@@ -251,8 +251,13 @@ def movement(inputs, player, objects):
         if inputs["REWIND"]:  # rewind functionality
             player.rewind()
         else:
-            x, y = inputs["PLAYER_MOVEMENT"]
-            player.movement(x, y)
+            x, y = inputs["PLAYER_MOVEMENT"] #Get player inputs
+
+            # STOP player from moving outside of bounds
+            if (player.x + x >= 384 or player.x + x <= 0 or \
+                player.y + y >= 448 or player.y + y <= 0) == False:
+                player.movement(x, y)
+
     # move all other objects
     for object in objects:
         if type(object) is Entity:  # bullets and misc
@@ -280,12 +285,15 @@ def game_collision(player, objects):
 
 
 def main():
-    MODE = "INPUT"  # "GRAPHICS"
+    # RENDER_MODE = "INPUT"  # "GRAPHICS"
+    RENDER_MODE = "INPUT"
+    # INPUT_MODE = "NONE" #"TERMINAL" #KEYS
+    INPUT_MODE = "KEYS"
 
     # initialize render(s)
-    if MODE == "GRAPHICS":
-        window = graphics_init()  # graphics.py renderer
-    if MODE == "INPUT":
+    if RENDER_MODE == "GRAPHICS":
+        window = graphics_init(SCREEN_WIDTH, SCREEN_HEIGHT)  # graphics.py renderer
+    if RENDER_MODE == "INPUT":
         surface, clock = pygame_init(SCREEN_WIDTH, SCREEN_HEIGHT)  # pygame renderer
 
     # Make some method of visual output (not sure on this...)
@@ -319,38 +327,60 @@ def main():
     while CMD_INPUT != "END":  # game loop
         # Renderer
 
-        if MODE == "GRAPHICS":
+        if RENDER_MODE == "GRAPHICS":
             renderer_graphics(Player, game_objects, window)
-        if MODE == "INPUT":
+        if RENDER_MODE == "INPUT":
             renderer_pygame(surface, clock, Player, game_objects)
 
-        if MODE == "GRAPHICS":
+        if INPUT_MODE == "TERMINAL":
             command_dict = parse_input(Player)
             if command_dict["TICKS"] != None:
                 TICKS = command_dict["TICKS"]
                 continue  # restart with new tick rate
-        if MODE == "INPUT":
-            # command_dict = player_input()
-            if CVOA_TICKS == -1:
-                command_dict = cvoa_algo(Player, game_objects)
-            if "MAX_FRAMES" in command_dict:
-                if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
-                    print("CVOA_TICKS", CVOA_TICKS)
-                    command_dict = cvoa_algo(Player, game_objects)
-                    CVOA_TICKS = 0
-            CVOA_TICKS += 1
+        if INPUT_MODE == "KEYS":
+            command_dict = player_input()
+        if INPUT_MODE == "NONE":
+            try:
+                TICKS = int(input())
+            except:
+                TICKS = 1
+            # if CVOA_TICKS == -1:
+            #     command_dict = cvoa_algo(Player, game_objects)
+            # if "MAX_FRAMES" in command_dict:
+            #     if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
+            #         print("CVOA_TICKS", CVOA_TICKS)
+            #         command_dict = cvoa_algo(Player, game_objects)
+            #         CVOA_TICKS = 0
+            # CVOA_TICKS += 1
             
 
         # print(command_dict)
 
         # for tick in ticks: #simulate command for certain amount of ticks
         for tick in range(TICKS):
+
+            CVOA_ACTIVE = True
+            if (CVOA_ACTIVE):
+                if CVOA_TICKS == -1: #Initialize CVOA timer check
+                    command_dict = cvoa_algo(Player, game_objects)
+                if "MAX_FRAMES" in command_dict:
+                    if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
+                        print("CVOA_TICKS", CVOA_TICKS)
+                        command_dict = cvoa_algo(Player, game_objects)
+                        CVOA_TICKS = 0
+                CVOA_TICKS += 1
+
             movement(command_dict, Player, game_objects)
             # Simluate collision
             game_collision(Player, game_objects)
 
         # renderer_pygame(surface, clock, Player, game_objects)
 
+    if RENDER_MODE == "INPUT":
+        pygame.quit()
+    sys.exit()
+
+    
 
 # just organizational things.
 if __name__ == "__main__":
