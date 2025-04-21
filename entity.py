@@ -127,6 +127,14 @@ class Entity:
             other_copy.movement(other_copy.velocity_x, other_copy.velocity_y)
             #Check to see if they collide
             # print(t_)
+
+            # if going outside of area
+            if other.name == "player" and \
+                (other.x >= 384 or other.x <= 0 or \
+                other.y >= 448 or other.y <= 0):
+                return t_-1
+            
+            # if collision detected this frame
             if self_copy.aabb(other_copy) == True:
                 # print("RETURN -1")
                 return t_-1
