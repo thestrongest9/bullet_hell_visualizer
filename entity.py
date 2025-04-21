@@ -42,7 +42,7 @@ class Entity:
         self.move_list = []  # cool ability to rewind!
 
     def draw_to(self, win):
-        print(self.name)
+        # print(self.name)
         # self.rect.draw(win)
         if self.drawn == False:
             self.rect.draw(win)
@@ -143,6 +143,8 @@ class Entity:
 
     def rewind(self):
         self.movement(0, 0, rewind=True)  # rewind
+        if len(self.move_list) == 0:
+            return True
 
     def execute_command(self):
         pass

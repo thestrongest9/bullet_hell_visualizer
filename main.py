@@ -57,7 +57,7 @@ def parse_input(Player):
     # Rewind actions
     if CMD_INPUT == "REWIND":
         dictionary["REWIND"] = True
-        Player.rewind()
+        # Player.rewind()
 
     return dictionary
 
@@ -176,13 +176,13 @@ def cvoa_algo(player, objects):
                         #get how many frames it is safe to move in direction (velocity) v.
                         # no_collision_frames = ob.check_steps_ahead(CHECK_FRAMES, player, v)
                         no_collision_frames = player.check_steps_ahead(CHECK_FRAMES, ob, v)
-                        print("num of frames", no_collision_frames)
+                        # print("num of frames", no_collision_frames)
                         if dir_collision[v] > no_collision_frames: #get the minimum amount of frames for that direction, based on collision detection with the obstacle
                             dir_collision[v] = no_collision_frames
 
     max_frames = 0
 
-    print("GREATEST", dir_collision)
+    # print("GREATEST", dir_collision)
     # safe_velocities = {}
 
     #choose from some safe velocities
@@ -254,7 +254,7 @@ def movement(inputs, player, objects):
     # move player
     if type(player) is Entity:  # do player movement stuff
         if inputs["REWIND"]:  # rewind functionality
-            player.rewind()
+            inputs["REWIND_LIMIT"] = player.rewind()
         else:
             x, y = inputs["PLAYER_MOVEMENT"] #Get player inputs
 
@@ -366,6 +366,10 @@ def main():
 
         # for tick in ticks: #simulate command for certain amount of ticks
         for tick in range(TICKS):
+
+            if "REWIND_LIMIT" in command_dict:
+                if command_dict["REWIND_LIMIT"] == True:
+                    break
 
             CVOA_ACTIVE = True
             if (CVOA_ACTIVE):
