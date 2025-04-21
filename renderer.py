@@ -8,7 +8,7 @@ from copy import copy, deepcopy
 
 from entity import Entity, Spawner
 
-def graphics_init():
+def graphics_init(SCREEN_WIDTH, SCREEN_HEIGHT):
     window = GraphWin("Bullet-hell Simulation", SCREEN_WIDTH, SCREEN_HEIGHT)
     return window
 
