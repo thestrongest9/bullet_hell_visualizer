@@ -20,7 +20,7 @@ def parse_input(Player):
     CMD_INPUT = CMD_INPUT.upper()  # make inputs uppercase
 
     # create dictionary that returns parsed values of input
-    dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": (0, 0)}
+    dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": (0, 0), "CONTROL_OVERRIDE": True}
 
     # simulate player movement
     if CMD_INPUT == "UP":
@@ -43,6 +43,7 @@ def parse_input(Player):
         dictionary["PLAYER_MOVEMENT"] = (0, 0)
     else:
         dictionary["PLAYER_MOVEMENT"] = None
+        dictionary["CONTROL_OVERRIDE"] = False
 
 
     # Change ticks
@@ -62,34 +63,36 @@ def parse_input(Player):
     return dictionary
 
 
-def player_input():
+def player_input(dictionary):
     # manual control for game
     # used only in pygame rendering mode
 
     # NOTE: this return dictionary should be in the exact same format as the one in parse_input().
-    dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": (0, 0)}
+    # dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": (0, 0)}
+    dictionary["REWIND"] = False
+    dictionary["TICKS"] = None
 
     x, y = 0, 0
     down = (0, 0)
     up = (0, 0)
     left = (0, 0)
     right = (0, 0)
-    # FIXME: Input completely messed up. Need to fix this.
+    
+    #For loop here is for keys that only get pressed once, or events that don't happen simultaneously.
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_w:
-                x, y = (0, 1)
-            if event.key == pygame.K_a:
-                pass
-            if event.key == pygame.K_s:
-                x, y = (0, -1)
-            if event.key == pygame.K_d:
-                pass
+        if event.type == pygame.KEYDOWN: #Only happen when key pressed down (once)
+            if event.key == pygame.K_r:
+                dictionary["CONTROL_OVERRIDE"] = not(dictionary["CONTROL_OVERRIDE"])
+                if dictionary["CONTROL_OVERRIDE"] == True:
+                    print("CONTROL OVERRIDEN")
+                else:
+                    print("CONTROL AUTOMATIC")
     keys = pygame.key.get_pressed()
 
+    #Below is required to detect multiple key presses at once.
     if keys[pygame.K_UP]:
         up = (0, -1)
     else:
@@ -291,8 +294,8 @@ def game_collision(player, objects):
 
 def main():
     # RENDER_MODE = "INPUT"  # "GRAPHICS"
-    RENDER_MODE = "GRAPHICS"
-    INPUT_MODE = "TERMINAL" #"TERMINAL" #KEYS
+    RENDER_MODE = "INPUT"
+    INPUT_MODE = "KEYS" #"TERMINAL" #KEYS
     # INPUT_MODE = "KEYS"
 
     # initialize render(s)
@@ -328,6 +331,7 @@ def main():
     CVOA_TICKS = -1 # Determines when new direction should be returned by CVOA. Without this output is chaotic.
 
     command_dict = {}
+    command_dict["CONTROL_OVERRIDE"] = True
 
     cvoa_return_dict = {}
 
@@ -346,7 +350,8 @@ def main():
                 CVOA_TICKS = -1
                 continue  # restart with new tick rate
         if INPUT_MODE == "KEYS":
-            command_dict = player_input()
+            # command_dict = player_input()
+            player_input(command_dict)
         # if INPUT_MODE == "NONE":
         #     try:
         #         TICKS = int(input())
@@ -372,17 +377,19 @@ def main():
                     break
 
             CVOA_ACTIVE = True
-            if (CVOA_ACTIVE):
-                if CVOA_TICKS == -1: #Initialize CVOA timer check
-                    cvoa_return_dict = cvoa_algo(Player, game_objects)
-                if "MAX_FRAMES" in command_dict:
-                    if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
-                        print("CVOA_TICKS", CVOA_TICKS)
+            # print(command_dict["PLAYER_MOVEMENT"])
+            if "CONTROL_OVERRIDE" in command_dict and command_dict["CONTROL_OVERRIDE"] == False:
+                if (CVOA_ACTIVE):
+                    if CVOA_TICKS == -1: #Initialize CVOA timer check
                         cvoa_return_dict = cvoa_algo(Player, game_objects)
-                        CVOA_TICKS = 0
-                command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
-                command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
-                CVOA_TICKS += 1
+                    if "MAX_FRAMES" in command_dict:
+                        if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
+                            # print("CVOA_TICKS", CVOA_TICKS)
+                            cvoa_return_dict = cvoa_algo(Player, game_objects)
+                            CVOA_TICKS = 0
+                    command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
+                    command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
+                    CVOA_TICKS += 1
 
             movement(command_dict, Player, game_objects)
             # Simluate collision
