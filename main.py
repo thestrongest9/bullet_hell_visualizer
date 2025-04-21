@@ -210,18 +210,24 @@ def cvoa_algo(player, objects):
         # print(len(safe_velocities))
         # max_t_velocity = safe_velocities[random.randint(0, len(safe_velocities)-1)]
 
-        # #choose closest to center
-        # for dir in safe_velocities[GREATEST_POSSIBLE_FRAMES]:
-        #     dir_x, dir_y = dir
-        #     #manhattan distance
-        #     # y_axis * 2 => to emphasize y-axis movement more over x, otherwise when same good move appears, gets stuck beneath bullet and collides at bottom of screen.
-        #     temp = abs(player.rect.x + dir_x - 320) + abs(player.rect.y + dir_y - 240) * 2 
-        #     if temp <= dist:
-        #         max_t_velocity = dir
-        #         dist = temp
+        #FROM THE BEST VELOCITIES, CHOOSE ONE
+        #NOTE: This is where the macrododging algorithm should go.
+
+        #1) Macrododging
         
-        #pick randomly
-        max_t_velocity = safe_velocities[GREATEST_POSSIBLE_FRAMES][random.randint(0, len(safe_velocities[GREATEST_POSSIBLE_FRAMES])-1)]
+
+        #2) choose closest to center
+        for dir in safe_velocities[GREATEST_POSSIBLE_FRAMES]:
+            dir_x, dir_y = dir
+            #manhattan distance
+            # y_axis * 2 => to emphasize y-axis movement more over x, otherwise when same good move appears, gets stuck beneath bullet and collides at bottom of screen.
+            temp = abs(player.x + dir_x - 384/2) + abs(player.y + dir_y - 448/2) 
+            if temp <= dist:
+                max_t_velocity = dir
+                dist = temp
+        
+        #3) pick randomly
+        # max_t_velocity = safe_velocities[GREATEST_POSSIBLE_FRAMES][random.randint(0, len(safe_velocities[GREATEST_POSSIBLE_FRAMES])-1)]
     
     max_frames = dir_collision[max_t_velocity]
 
