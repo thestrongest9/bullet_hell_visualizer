@@ -25,20 +25,25 @@ def parse_input(Player):
     # simulate player movement
     if CMD_INPUT == "UP":
         dictionary["PLAYER_MOVEMENT"] = (0, -1)
-    if CMD_INPUT == "DOWN":
+    elif CMD_INPUT == "DOWN":
         dictionary["PLAYER_MOVEMENT"] = (0, 1)
-    if CMD_INPUT == "LEFT":
+    elif CMD_INPUT == "LEFT":
         dictionary["PLAYER_MOVEMENT"] = (-1, 0)
-    if CMD_INPUT == "RIGHT":
+    elif CMD_INPUT == "RIGHT":
         dictionary["PLAYER_MOVEMENT"] = (1, 0)
-    if CMD_INPUT == "UPLEFT":
+    elif CMD_INPUT == "UPLEFT":
         dictionary["PLAYER_MOVEMENT"] = (-1, -1)
-    if CMD_INPUT == "UPRIGHT":
+    elif CMD_INPUT == "UPRIGHT":
         dictionary["PLAYER_MOVEMENT"] = (1, -1)
-    if CMD_INPUT == "DOWNLEFT":
+    elif CMD_INPUT == "DOWNLEFT":
         dictionary["PLAYER_MOVEMENT"] = (-1, 1)
-    if CMD_INPUT == "DOWNRIGHT":
+    elif CMD_INPUT == "DOWNRIGHT":
         dictionary["PLAYER_MOVEMENT"] = (1, 1)
+    elif CMD_INPUT == "NONE":
+        dictionary["PLAYER_MOVEMENT"] = (0, 0)
+    else:
+        dictionary["PLAYER_MOVEMENT"] = None
+
 
     # Change ticks
     try:  # FIXME: Change this
@@ -286,9 +291,9 @@ def game_collision(player, objects):
 
 def main():
     # RENDER_MODE = "INPUT"  # "GRAPHICS"
-    RENDER_MODE = "INPUT"
-    # INPUT_MODE = "NONE" #"TERMINAL" #KEYS
-    INPUT_MODE = "KEYS"
+    RENDER_MODE = "GRAPHICS"
+    INPUT_MODE = "TERMINAL" #"TERMINAL" #KEYS
+    # INPUT_MODE = "KEYS"
 
     # initialize render(s)
     if RENDER_MODE == "GRAPHICS":
@@ -324,6 +329,8 @@ def main():
 
     command_dict = {}
 
+    cvoa_return_dict = {}
+
     while CMD_INPUT != "END":  # game loop
         # Renderer
 
@@ -336,14 +343,15 @@ def main():
             command_dict = parse_input(Player)
             if command_dict["TICKS"] != None:
                 TICKS = command_dict["TICKS"]
+                CVOA_TICKS = -1
                 continue  # restart with new tick rate
         if INPUT_MODE == "KEYS":
             command_dict = player_input()
-        if INPUT_MODE == "NONE":
-            try:
-                TICKS = int(input())
-            except:
-                TICKS = 1
+        # if INPUT_MODE == "NONE":
+        #     try:
+        #         TICKS = int(input())
+        #     except:
+        #         TICKS = 1
             # if CVOA_TICKS == -1:
             #     command_dict = cvoa_algo(Player, game_objects)
             # if "MAX_FRAMES" in command_dict:
@@ -362,12 +370,14 @@ def main():
             CVOA_ACTIVE = True
             if (CVOA_ACTIVE):
                 if CVOA_TICKS == -1: #Initialize CVOA timer check
-                    command_dict = cvoa_algo(Player, game_objects)
+                    cvoa_return_dict = cvoa_algo(Player, game_objects)
                 if "MAX_FRAMES" in command_dict:
                     if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
                         print("CVOA_TICKS", CVOA_TICKS)
-                        command_dict = cvoa_algo(Player, game_objects)
+                        cvoa_return_dict = cvoa_algo(Player, game_objects)
                         CVOA_TICKS = 0
+                command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
+                command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
                 CVOA_TICKS += 1
 
             movement(command_dict, Player, game_objects)
