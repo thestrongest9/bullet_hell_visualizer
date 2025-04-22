@@ -149,6 +149,11 @@ class Entity:
     def execute_command(self):
         pass
 
+    def position(self):
+        # if self.name == "player":
+        #     print("PLAYER MOVE", [self.x, self.y])
+        return [self.x, self.y]
+
 #Potentially might be a good idea to separate collision component into separate object.
 #This will just make checking future steps ahead easier.
 class collision_checker:
@@ -276,3 +281,44 @@ class Spawner:
 
     def execute_command(self):
         pass
+
+
+class VisualElement:
+    def __init__(self, name, x, y, height, width, color="yellow"):
+        self.name = name
+        self.x = x
+        self.y = y
+        self.height = height
+        self.width = width
+        self.x1 = x - width / 2
+        self.x2 = x + width / 2
+        self.y1 = y - height / 2
+        self.y2 = y + height / 2
+        self.velocity_x = 0
+        self.velocity_y = 0
+
+        # Rect used for graphics.py rendering
+        self.rect = Rectangle(
+            Point(self.x1, self.y1), Point(self.x2, self.y2)
+        )  # allows for drawing
+
+        # Pygame rect: https://www.pygame.org/docs/ref/rect.html
+        # Pygame.rect(left, top, width, height)
+        self.pygame_rect = pygame.Rect(self.x1, self.y1, self.width, self.height)
+
+        self.drawn = False
+
+        
+        self.rect.setFill(color)
+        self.pygame_color = pygame.Color(color)
+        
+        
+        # self.rect.draw(window)
+        self.move_list = []  # cool ability to rewind!
+
+    def draw_to(self, win):
+        # print(self.name)
+        # self.rect.draw(win)
+        if self.drawn == False:
+            self.rect.draw(win)
+            self.drawn = True

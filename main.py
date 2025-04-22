@@ -6,13 +6,14 @@ import sys, os, pygame, re, random
 import numpy as np
 from copy import copy, deepcopy
 
-from entity import Entity, Spawner
+from entity import Entity, Spawner, VisualElement
 from renderer import graphics_init, renderer_graphics, pygame_init, renderer_pygame
 
 # GLOBALS
 SCREEN_HEIGHT = 448  # These are just the Touhou numbers adapted directly
 SCREEN_WIDTH = 384
 
+helpers = [] #FIXME: awful way of doing this.
 
 def parse_input(Player):
     CMD_INPUT = input("ENTER COMMAND HERE: ")  # accept input until stop
@@ -124,6 +125,57 @@ def player_input(dictionary):
 
     return dictionary
 
+# Euclidean distance function
+def euclidean_distance(p1, p2):
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+draw_void_center = []
+
+def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
+    # xmin, xmax = 0, SCREEN_WIDTH
+    # ymin, ymax = 0, SCREEN_HEIGHT
+    # xmin, xmax = SCREEN_WIDTH, 0
+    # ymin, ymax = SCREEN_HEIGHT, 0
+    xmin, xmax = 0, SCREEN_WIDTH
+    ymin, ymax = SCREEN_HEIGHT, 0
+
+    grid_points = []
+    for i in range(grid_resolution):
+        x = xmin + i * (xmax - xmin) / (grid_resolution - 1)
+        for j in range(grid_resolution):
+            y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
+            grid_points.append((x, y))
+
+    scored_points = []
+    min_dist = float("inf")
+    for gp in grid_points:
+        for pt in objects:
+            if type(pt) is Entity and pt.name != "player":
+                min_dist = min(min_dist, euclidean_distance(gp, pt.position()))
+        scored_points.append((min_dist, gp))
+
+    scored_points.sort(reverse=True)
+
+    void_centers = []
+    for dist, gp in scored_points:
+        if all(euclidean_distance(gp, existing) >= min_separation for existing in void_centers):
+            void_centers.append(gp)
+        if len(void_centers) >= num_voids:
+            break
+
+    helpers.clear() #clear list
+    for center in void_centers: #visual all void centers
+        x, y = center
+        print("CNETER", center)
+        helpers.append(VisualElement("Void Center", x, y, 10, 10))
+
+    # for center in grid_points: #visual all void centers
+    #     x, y = center
+    #     print("CNETER", center)
+    #     helpers.append(VisualElement("Void Center", x, y, 2, 2, "green"))
+
+    return void_centers, scored_points
+
 
 def cvoa_algo(player, objects):
     # Constrained Velocity Obstacle Algorithm (misnomer, but whatever)
@@ -214,17 +266,26 @@ def cvoa_algo(player, objects):
         #NOTE: This is where the macrododging algorithm should go.
 
         #1) Macrododging
-        
-
-        #2) choose closest to center
+        void_centers, _ = macrododging_algo(player, objects)
+        # print(void_centers)
+        val = float('inf')
         for dir in safe_velocities[GREATEST_POSSIBLE_FRAMES]:
             dir_x, dir_y = dir
-            #manhattan distance
-            # y_axis * 2 => to emphasize y-axis movement more over x, otherwise when same good move appears, gets stuck beneath bullet and collides at bottom of screen.
-            temp = abs(player.x + dir_x - 384/2) + abs(player.y + dir_y - 448/2) 
-            if temp <= dist:
-                max_t_velocity = dir
-                dist = temp
+            for center in void_centers:
+                center_x, center_y = center
+                if val > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
+                    max_t_velocity = dir
+                    val = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
+
+        # #2) choose closest to center
+        # for dir in safe_velocities[GREATEST_POSSIBLE_FRAMES]:
+        #     dir_x, dir_y = dir
+        #     #manhattan distance
+        #     # y_axis * 2 => to emphasize y-axis movement more over x, otherwise when same good move appears, gets stuck beneath bullet and collides at bottom of screen.
+        #     temp = abs(player.x + dir_x - 384/2) + abs(player.y + dir_y - 448/2) 
+        #     if temp <= dist:
+        #         max_t_velocity = dir
+        #         dist = temp
         
         #3) pick randomly
         # max_t_velocity = safe_velocities[GREATEST_POSSIBLE_FRAMES][random.randint(0, len(safe_velocities[GREATEST_POSSIBLE_FRAMES])-1)]
@@ -345,9 +406,9 @@ def main():
         # Renderer
 
         if RENDER_MODE == "GRAPHICS":
-            renderer_graphics(Player, game_objects, window)
+            renderer_graphics(Player, game_objects, window, helpers)
         if RENDER_MODE == "INPUT":
-            renderer_pygame(surface, clock, Player, game_objects)
+            renderer_pygame(surface, clock, Player, game_objects,  helpers)
 
         if INPUT_MODE == "TERMINAL":
             command_dict = parse_input(Player)

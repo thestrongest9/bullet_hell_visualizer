@@ -13,7 +13,7 @@ def graphics_init(SCREEN_WIDTH, SCREEN_HEIGHT):
     return window
 
 
-def renderer_graphics(player, objects, window):
+def renderer_graphics(player, objects, window, helpers=[]):
     # graphics.py based rendering
     # used for automatic testing
     # Draw the Entity
@@ -21,7 +21,9 @@ def renderer_graphics(player, objects, window):
     for object in objects:
         if type(object) is Entity:
             object.draw_to(window)
-    pass
+    
+    for helper in helpers:
+        helper.draw_to(window)
 
 
 def pygame_init(SCREEN_WIDTH, SCREEN_HEIGHT):
@@ -36,7 +38,7 @@ def pygame_init(SCREEN_WIDTH, SCREEN_HEIGHT):
     return surface, clock
 
 
-def renderer_pygame(surface, clock, player, objects):
+def renderer_pygame(surface, clock, player, objects, helpers=[]):
     # pygame renderer
     # used for human input
     surface.fill((0, 0, 0, 0))  # Clear screen each frame
@@ -47,6 +49,9 @@ def renderer_pygame(surface, clock, player, objects):
     for object in objects:
         if type(object) is Entity:
             pygame.draw.rect(surface, object.pygame_color, object.pygame_rect)
+
+    for helper in helpers:
+        pygame.draw.rect(surface, helper.pygame_color, helper.pygame_rect)
 
     clock.tick(30)  # 30 FPS
     pygame.display.update()
