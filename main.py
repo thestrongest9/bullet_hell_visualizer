@@ -336,9 +336,14 @@ def movement(inputs, player, objects):
             x, y = inputs["PLAYER_MOVEMENT"] #Get player inputs
 
             # STOP player from moving outside of bounds
-            if (player.x + x >= 384 or player.x + x <= 0 or \
-                player.y + y >= 448 or player.y + y <= 0) == False:
-                player.movement(x, y)
+            if player.x + x >= 384 or player.x + x <= 0:
+                x = 0
+            if player.y + y >= 448 or player.y + y <= 0:
+                y = 0
+            player.movement(x, y)
+            # if (player.x + x >= 384 or player.x + x <= 0 or \
+            #     player.y + y >= 448 or player.y + y <= 0) == False:
+            #     player.movement(x, y)
 
     # move all other objects
     for object in objects:
