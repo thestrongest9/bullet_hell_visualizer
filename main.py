@@ -360,10 +360,10 @@ def game_collision(player, objects):
 
 
 def main():
-    # RENDER_MODE = "INPUT"  # "GRAPHICS"
-    RENDER_MODE = "INPUT"
-    INPUT_MODE = "KEYS" #"TERMINAL" #KEYS
-    # INPUT_MODE = "KEYS"
+    RENDER_MODE = "INPUT"  # "GRAPHICS"
+    # RENDER_MODE = "GRAPHICS"
+    # INPUT_MODE = "TERMINAL" #"TERMINAL" #KEYS
+    INPUT_MODE = "KEYS"
 
     # initialize render(s)
     if RENDER_MODE == "GRAPHICS":
