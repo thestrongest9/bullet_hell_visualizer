@@ -134,10 +134,10 @@ draw_void_center = []
 def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
     # xmin, xmax = 0, SCREEN_WIDTH
     # ymin, ymax = 0, SCREEN_HEIGHT
-    # xmin, xmax = SCREEN_WIDTH, 0
-    # ymin, ymax = SCREEN_HEIGHT, 0
-    xmin, xmax = 0, SCREEN_WIDTH
+    xmin, xmax = SCREEN_WIDTH, 0
     ymin, ymax = SCREEN_HEIGHT, 0
+    # xmin, xmax = 0, SCREEN_WIDTH
+    # ymin, ymax = SCREEN_HEIGHT, 0
 
     grid_points = []
     for i in range(grid_resolution):
@@ -148,10 +148,13 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
 
     scored_points = []
     min_dist = float("inf")
+    max_dist = float("-inf")
     for gp in grid_points:
+        min_dist = float("inf")
         for pt in objects:
             if type(pt) is Entity and pt.name != "player":
                 min_dist = min(min_dist, euclidean_distance(gp, pt.position()))
+                max_dist = max(max_dist, euclidean_distance(gp, pt.position()))
         scored_points.append((min_dist, gp))
 
     scored_points.sort(reverse=True)
@@ -166,13 +169,17 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     helpers.clear() #clear list
     for center in void_centers: #visual all void centers
         x, y = center
-        print("CNETER", center)
+        print("CENTER", center)
         helpers.append(VisualElement("Void Center", x, y, 10, 10))
 
-    # for center in grid_points: #visual all void centers
-    #     x, y = center
-    #     print("CNETER", center)
-    #     helpers.append(VisualElement("Void Center", x, y, 2, 2, "green"))
+    for dist, gp in scored_points: #visualize all grid points
+        x, y = gp
+        # print("CNETER", center)
+        temp = VisualElement("Void Center", x, y, 2, 2, "green")
+        # print("dist", dist/max_dist)
+        val = int(255 * (dist/max_dist))
+        temp.pygame_color = pygame.Color(val, val, 255, 125)
+        helpers.append(temp)
 
     return void_centers, scored_points
 
