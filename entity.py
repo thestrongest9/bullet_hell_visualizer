@@ -240,9 +240,9 @@ class Spawner:
             bullet.velocity_y = bullet_velocity_y
             # self.bullets.append(bullet)
             spawned_bullets.append(bullet)
-            print(
-                f"Bullet spawned at angle {i * angle_step}° with velocity ({bullet_velocity_x}, {bullet_velocity_y})"
-            )
+            # print(
+            #     f"Bullet spawned at angle {i * angle_step}° with velocity ({bullet_velocity_x}, {bullet_velocity_y})"
+            # )
         return spawned_bullets
 
     def update(self, rewind=False):

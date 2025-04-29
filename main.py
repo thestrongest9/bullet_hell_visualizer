@@ -171,7 +171,7 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     helpers.clear() #clear list
     for center in void_centers: #visual all void centers
         x, y = center
-        print("CENTER", center)
+        # print("CENTER", center)
         helpers.append(VisualElement("Void Center", x, y, 10, 10))
 
     for dist, gp in scored_points: #visualize all grid points
