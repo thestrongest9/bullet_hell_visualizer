@@ -364,12 +364,15 @@ def movement(inputs, player, objects):
 
 def game_collision(player, objects):
     # collision detection for objects in the game
+    temp_objects = []
     for object in objects:
         if type(object) is Entity and object.name != "player":
             object.aabb(player)
+            if object.outside_of_area() == False: #NOTE: This will become an issue with the "rewind" functionality. Do something about that later.
+                temp_objects.append(object)
         elif type(object) is Spawner:
             object.spawner_detect_collision(player)
-
+    objects = temp_objects
 
 def main():
     RENDER_MODE = "INPUT"  # "GRAPHICS"
