@@ -140,8 +140,8 @@ class Entity:
             #     (other.x >= 384 or other.x <= 0 or \
             #     other.y >= 448 or other.y <= 0):
             #     return t_-1
-            if (self_copy.x >= 384 or self_copy.x <= 0 or \
-                self_copy.y >= 448 or self_copy.y <= 0):
+            if (self_copy.x > 384 or self_copy.x < 0 or \
+                self_copy.y > 448 or self_copy.y < 0):
                 return t_-1
             
             # if collision detected this frame
