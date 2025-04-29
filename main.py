@@ -9,6 +9,8 @@ from copy import copy, deepcopy
 from entity import Entity, Spawner, VisualElement
 from renderer import graphics_init, renderer_graphics, pygame_init, renderer_pygame
 
+import datetime
+
 # GLOBALS
 SCREEN_HEIGHT = 448  # These are just the Touhou numbers adapted directly
 SCREEN_WIDTH = 384
@@ -417,7 +419,15 @@ def main():
 
     cvoa_return_dict = {}
 
+    prev_time = datetime.datetime.now()
+
     while CMD_INPUT != "END":  # game loop
+        if (datetime.datetime.now() - prev_time).total_seconds() > 5:
+            bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
+            game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
+            prev_time = datetime.datetime.now()
+            # print("NEW TIME")
+
         # Renderer
 
         if RENDER_MODE == "GRAPHICS":
