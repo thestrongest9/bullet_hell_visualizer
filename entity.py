@@ -105,6 +105,13 @@ class Entity:
         # Most likely something to do with pixel coordinates?
         # self.pygame_rect.move_ip(dx, dy)
 
+    def outside_of_area(self, height=448, width=384):
+        if abs(height/2 - self.x) > height/2 + 100:
+            return True
+        if abs(width/2 - self.y) > width/2 + 100:
+            return True
+        return False
+
     
     """Simulates collision detection for future steps"""
     #args:
