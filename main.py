@@ -17,6 +17,10 @@ SCREEN_WIDTH = 384
 
 helpers = [] #FIXME: awful way of doing this.
 
+#FIXME: Making globals here, very ugly fix this later.
+creating_grid = False
+grid_points = []
+
 def parse_input(Player):
     CMD_INPUT = input("ENTER COMMAND HERE: ")  # accept input until stop
 
@@ -141,12 +145,16 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     # xmin, xmax = 0, SCREEN_WIDTH
     # ymin, ymax = SCREEN_HEIGHT, 0
 
-    grid_points = []
-    for i in range(grid_resolution):
-        x = xmin + i * (xmax - xmin) / (grid_resolution - 1)
-        for j in range(grid_resolution):
-            y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
-            grid_points.append((x, y))
+    global creating_grid #Set this to global
+    # grid_points = []
+    if creating_grid == False:
+        for i in range(grid_resolution):
+            x = xmin + i * (xmax - xmin) / (grid_resolution - 1)
+            for j in range(grid_resolution):
+                y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
+                grid_points.append((x, y))
+        print("Grid creation should fire only once.")
+        creating_grid = True
 
     scored_points = []
     min_dist = float("inf")
@@ -161,23 +169,29 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
 
     scored_points.sort(reverse=True)
 
+    helpers.clear()
     void_centers = []
     for dist, gp in scored_points:
         if all(euclidean_distance(gp, existing) >= min_separation for existing in void_centers):
+            # Append to void_centers
             void_centers.append(gp)
+            # Visualize all void centers
+            x, y = gp
+            helpers.append(VisualElement("Void Center", x, y, 10, 10))
+
         if len(void_centers) >= num_voids:
             break
 
-    helpers.clear() #clear list
-    for center in void_centers: #visual all void centers
-        x, y = center
-        # print("CENTER", center)
-        helpers.append(VisualElement("Void Center", x, y, 10, 10))
+    # helpers.clear() #clear list
+    # for center in void_centers: #visual all void centers
+    #     x, y = center
+    #     # print("CENTER", center)
+    #     helpers.append(VisualElement("Void Center", x, y, 10, 10))
 
     for dist, gp in scored_points: #visualize all grid points
         x, y = gp
         # print("CNETER", center)
-        temp = VisualElement("Void Center", x, y, 2, 2, "green")
+        temp = VisualElement("Void Center", x, y, 2, 2, "purple")
         # print("dist", dist/max_dist)
         val = int(255 * (dist/max_dist))
         temp.pygame_color = pygame.Color(val, val, 255, 125)
