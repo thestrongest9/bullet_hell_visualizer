@@ -16,6 +16,7 @@ SCREEN_HEIGHT = 448  # These are just the Touhou numbers adapted directly
 SCREEN_WIDTH = 384
 
 helpers = [] #FIXME: awful way of doing this.
+void_center_visuals = []
 
 #FIXME: Making globals here, very ugly fix this later.
 creating_grid = False
@@ -146,9 +147,10 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     # ymin, ymax = SCREEN_HEIGHT, 0
 
     global creating_grid #Set this to global
-    global helpers
+    global grid_points
+    # global helpers
     # grid_points = []
-    if creating_grid == False:
+    if grid_points == []:
         for i in range(grid_resolution):
             x = xmin + i * (xmax - xmin) / (grid_resolution - 1)
             for j in range(grid_resolution):
@@ -160,6 +162,7 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     scored_points = []
     min_dist = float("inf")
     max_dist = float("-inf")
+    
     for gp in grid_points:
         min_dist = float("inf")
         for pt in objects:
@@ -170,15 +173,15 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
 
     scored_points.sort(reverse=True)
 
-    helpers.clear()
+    # helpers.clear()
     void_centers = []
     for dist, gp in scored_points:
         if all(euclidean_distance(gp, existing) >= min_separation for existing in void_centers):
             # Append to void_centers
             void_centers.append(gp)
             # Visualize all void centers
-            x, y = gp
-            helpers.append(VisualElement("Void Center", x, y, 10, 10))
+            # x, y = gp
+            # helpers.append(VisualElement("Void Center", x, y, 10, 10))
 
         if len(void_centers) >= num_voids:
             break
@@ -188,15 +191,16 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     #     x, y = center
     #     # print("CENTER", center)
     #     helpers.append(VisualElement("Void Center", x, y, 10, 10))
-
-    for dist, gp in scored_points: #visualize all grid points
-        x, y = gp
-        # print("CNETER", center)
-        temp = VisualElement("Void Center", x, y, 2, 2, "purple")
-        # print("dist", dist/max_dist)
-        val = int(255 * (dist/max_dist))
-        temp.pygame_color = pygame.Color(val, val, 255, 125)
-        helpers.append(temp)
+    # for dist, gp in scored_points: #visualize all grid points
+    #     x, y = gp
+    #     # print("CNETER", center)
+    #     temp = VisualElement("Void Center", x, y, 2, 2, "purple")
+    #     # print("dist", dist/max_dist)
+    #     val = int(255 * (dist/max_dist))
+    #     temp.pygame_color = pygame.Color(val, val, 255, 125)
+    #     helpers.append(temp)
+    
+                
 
     return void_centers, scored_points
 
@@ -244,89 +248,42 @@ def cvoa_algo(player, objects):
     
     CHECK_FRAMES = 20 #amount of frames to check for collision
 
-    #remove any velocity that would cause collision
-    for ob in objects:
-        if type(ob) is Entity:
-            if ob.name != "player":
-                #FIXME: When working on frame time divided version, need to set distance to very high number (need to take into account all bullets)
-                if True:#ob.get_distance(player) <= 128.0: #only consider obstacles close enough
-                # if ob.get_distance(player) <= 256:#128.0: #only consider obstacles close enough
-                    for v in possible_velocities:
-                        #get how many frames it is safe to move in direction (velocity) v.
-                        # no_collision_frames = ob.check_steps_ahead(CHECK_FRAMES, player, v)
-                        no_collision_frames = player.check_steps_ahead(CHECK_FRAMES, ob, v)
-                        # print("num of frames", no_collision_frames)
-                        if dir_collision[v] > no_collision_frames: #get the minimum amount of frames for that direction, based on collision detection with the obstacle
-                            dir_collision[v] = no_collision_frames
+    MAX_FRAMES = CHECK_FRAMES + 1
+    MAX_FRAME_DIRS = []
 
-    max_frames = 0
+    MAX_FRAMES = 0
+    for v in possible_velocities:
+        for ob in objects:
+            if type(ob) is Entity:
+                if ob.name != "player":
+                    no_collision_frames = player.check_steps_ahead(CHECK_FRAMES, ob, v)
+                    if dir_collision[v] > no_collision_frames: #get the minimum amount of frames for that direction, based on collision detection with the obstacle
+                        dir_collision[v] = no_collision_frames
+        #Check best directions
+        if dir_collision[v] > MAX_FRAMES:
+            MAX_FRAME_DIRS.clear()
+            MAX_FRAME_DIRS.append(v)
+            MAX_FRAMES = dir_collision[v]
+        elif dir_collision[v] == MAX_FRAMES:
+            MAX_FRAME_DIRS.append(v)
 
-    # print("GREATEST", dir_collision)
-    # safe_velocities = {}
-
-    #choose from some safe velocities
-    safe_velocities = {}
-    GREATEST_POSSIBLE_FRAMES = None
-    dist = float("inf")
-    for direction, frames in dir_collision.items():
-        if frames not in safe_velocities:
-            safe_velocities[frames] = [direction]
-        else:
-            safe_velocities[frames].append(direction)
+    # print(MAX_FRAME_DIRS)
+    # Macrododging
+    #1) Calculate void centers from inverse clustering 
+    void_centers, _ = macrododging_algo(player, objects)
+    # void_centers = [(int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2))]
+    #2) Calculate whichever direction will move to closest void center
+    dist = float('inf')
+    for dir in MAX_FRAME_DIRS:
+        dir_x, dir_y = dir
+        for center in void_centers:
+            center_x, center_y = center
+            if dist > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
+                max_t_velocity = dir
+                dist = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
         
-        #check if greatest number of frames possible from current set of directions
-        if GREATEST_POSSIBLE_FRAMES == None:
-            GREATEST_POSSIBLE_FRAMES = frames
-        else:
-            if frames > GREATEST_POSSIBLE_FRAMES:
-                GREATEST_POSSIBLE_FRAMES = frames
 
-    # print("GREATEST", dir_collision)
-    if GREATEST_POSSIBLE_FRAMES != None:
-        # print(len(safe_velocities))
-        # max_t_velocity = safe_velocities[random.randint(0, len(safe_velocities)-1)]
-
-        #FROM THE BEST VELOCITIES, CHOOSE ONE
-        #NOTE: This is where the macrododging algorithm should go.
-
-        #1) Macrododging
-        void_centers, _ = macrododging_algo(player, objects)
-        # print(void_centers)
-        val = float('inf')
-        for dir in safe_velocities[GREATEST_POSSIBLE_FRAMES]:
-            dir_x, dir_y = dir
-            for center in void_centers:
-                center_x, center_y = center
-                if val > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
-                    max_t_velocity = dir
-                    val = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
-
-        # #2) choose closest to center
-        # for dir in safe_velocities[GREATEST_POSSIBLE_FRAMES]:
-        #     dir_x, dir_y = dir
-        #     #manhattan distance
-        #     # y_axis * 2 => to emphasize y-axis movement more over x, otherwise when same good move appears, gets stuck beneath bullet and collides at bottom of screen.
-        #     temp = abs(player.x + dir_x - 384/2) + abs(player.y + dir_y - 448/2) 
-        #     if temp <= dist:
-        #         max_t_velocity = dir
-        #         dist = temp
-        
-        #3) pick randomly
-        # max_t_velocity = safe_velocities[GREATEST_POSSIBLE_FRAMES][random.randint(0, len(safe_velocities[GREATEST_POSSIBLE_FRAMES])-1)]
-    
-    max_frames = dir_collision[max_t_velocity]
-
-    # x, y = max_t_velocity #FIXME: Better way to do this?
-    # print(max_t_velocity)
-
-    if max_frames > CHECK_FRAMES: #this means that the max_Frames = infinity
-        max_frames = 0
-    # else:
-    #     max_frames = GREATEST_POSSIBLE_FRAMES
-
-    # return (x, y, max_frames) #return x, y, and frame count (frame count so that player AI can switch to different velocity after current one is no longer safe)
-
-    dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": max_frames}
+    dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": MAX_FRAMES}
     return dictionary
 
 
@@ -362,6 +319,29 @@ def movement(inputs, player, objects):
             #     player.y + y >= 448 or player.y + y <= 0) == False:
             #     player.movement(x, y)
 
+    cnt = 0
+    obj_len = len(objects)
+    while cnt < obj_len:
+        object = objects.pop(0)
+        if type(object) is Entity:  # bullets and misc
+            if object.name == "player":  # skip player
+                objects.append(object)
+                # continue
+            else:  # check everything else
+                if inputs["REWIND"]:
+                    object.rewind()
+                    objects.append(object)
+                else:
+                    object.movement(object.velocity_x, object.velocity_y)
+                    if object.check_outside_play_area() == False:
+                        objects.append(object)
+        elif type(object) is Spawner:  # spawners
+            if inputs["REWIND"]:
+                object.update(rewind=True)
+            else:
+                object.update()
+            objects.append(object)
+        cnt += 1
     # move all other objects
     for object in objects:
         if type(object) is Entity:  # bullets and misc

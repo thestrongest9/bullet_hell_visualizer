@@ -105,6 +105,18 @@ class Entity:
         # Most likely something to do with pixel coordinates?
         # self.pygame_rect.move_ip(dx, dy)
 
+    def check_outside_play_area(self, SCREEN_HEIGHT = 448, SCREEN_WIDTH = 384):
+        if (self.x > SCREEN_WIDTH + self.width):
+            return True
+        elif (self.y > SCREEN_HEIGHT + self.height):
+            return True
+        elif (self.x < -self.width):
+            return True
+        elif (self.y < -self.height):
+            return True
+        else:
+            return False
+    
     def outside_of_area(self, height=448, width=384):
         if abs(height/2 - self.x) > height/2 + 100:
             return True
