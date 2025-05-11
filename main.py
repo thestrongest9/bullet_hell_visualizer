@@ -186,19 +186,19 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         if len(void_centers) >= num_voids:
             break
 
-    # helpers.clear() #clear list
-    # for center in void_centers: #visual all void centers
-    #     x, y = center
-    #     # print("CENTER", center)
-    #     helpers.append(VisualElement("Void Center", x, y, 10, 10))
-    # for dist, gp in scored_points: #visualize all grid points
-    #     x, y = gp
-    #     # print("CNETER", center)
-    #     temp = VisualElement("Void Center", x, y, 2, 2, "purple")
-    #     # print("dist", dist/max_dist)
-    #     val = int(255 * (dist/max_dist))
-    #     temp.pygame_color = pygame.Color(val, val, 255, 125)
-    #     helpers.append(temp)
+    helpers.clear() #clear list
+    for center in void_centers: #visual all void centers
+        x, y = center
+        # print("CENTER", center)
+        helpers.append(VisualElement("Void Center", x, y, 10, 10))
+    for dist, gp in scored_points: #visualize all grid points
+        x, y = gp
+        # print("CNETER", center)
+        temp = VisualElement("Void Center", x, y, 2, 2, "purple")
+        # print("dist", dist/max_dist)
+        val = int(255 * (dist/max_dist))
+        temp.pygame_color = pygame.Color(val, val, 255, 125)
+        helpers.append(temp)
     
                 
 
@@ -251,7 +251,7 @@ def cvoa_algo(player, objects):
     MAX_FRAMES = CHECK_FRAMES + 1
     MAX_FRAME_DIRS = []
 
-    MAX_FRAMES = 0
+    MAX_FRAMES = -1
     for v in possible_velocities:
         for ob in objects:
             if type(ob) is Entity:
@@ -267,7 +267,8 @@ def cvoa_algo(player, objects):
         elif dir_collision[v] == MAX_FRAMES:
             MAX_FRAME_DIRS.append(v)
 
-    # print(MAX_FRAME_DIRS)
+    print(MAX_FRAME_DIRS, MAX_FRAMES)
+
     # Macrododging
     #1) Calculate void centers from inverse clustering 
     void_centers, _ = macrododging_algo(player, objects)
