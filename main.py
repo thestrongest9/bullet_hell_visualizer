@@ -146,6 +146,7 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     # ymin, ymax = SCREEN_HEIGHT, 0
 
     global creating_grid #Set this to global
+    global helpers
     # grid_points = []
     if creating_grid == False:
         for i in range(grid_resolution):
