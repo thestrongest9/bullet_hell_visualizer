@@ -135,9 +135,9 @@ class Entity:
 
         #if too far away from each other and will never meet anyways
         #then don't bother for-looping this
-        if (abs(self.x-other.x) > (potential_x-other.velocity_x)*t and abs(self.y-other.y) > (potential_y-other.velocity_y)*t ):
-            # print("instant return")
-            return t
+        # if (abs(self.x-other.x) > (potential_x-other.velocity_x)*t and abs(self.y-other.y) > (potential_y-other.velocity_y)*t ):
+        #     # print("instant return")
+        #     return t
 
         #Create duplicate objects that are the same but just simulated ahead
         # self_copy = deepcopy(self)
