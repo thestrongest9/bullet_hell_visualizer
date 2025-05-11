@@ -53,7 +53,7 @@ class Entity:
         # Maybe should add radius component?
         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
         if (
-            math.sqrt(math.pow(self.x - other.x, 2) + math.pow(self.y - other.y, 2))
+            math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
             < self.height
         ):  # FIXME: circular distance isn't working
             print(f"Collision between {self.name} and {other.name}")
