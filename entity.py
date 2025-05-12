@@ -54,7 +54,7 @@ class Entity:
         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
         if (
             math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
-            < self.height
+            <= self.height
         ):  # FIXME: circular distance isn't working
             print(f"Collision between {self.name} and {other.name}")
             return True
@@ -148,7 +148,7 @@ class Entity:
         #simulate these copies for t-steps
         for t_ in range(t):
             #Move player and other by their velocity
-            self_copy.movement(potential_x, potential_y)
+            self_copy.movement(potential_x, potential_y, True)
             other_copy.movement(other_copy.velocity_x, other_copy.velocity_y)
             #Check to see if they collide
             # print(t_)
@@ -158,8 +158,8 @@ class Entity:
             #     (other.x >= 384 or other.x <= 0 or \
             #     other.y >= 448 or other.y <= 0):
             #     return t_-1
-            if (self_copy.x > 384 or self_copy.x < 0 or \
-                self_copy.y > 448 or self_copy.y < 0):
+            if (self_copy.x >= 384 or self_copy.x <= 0 or \
+                self_copy.y >= 448 or self_copy.y <= 0):
                 return t_-1
             
             # if collision detected this frame
@@ -197,15 +197,28 @@ class collision_checker:
         self.velocity_x = velocity_x
         self.velocity_y = velocity_y
 
-    def movement(self, dx, dy):
+    def movement(self, dx, dy, player=False):
+        x = dx
+        y = dy
+        if player:
+            # print(dx, dy, self.x,)
+            if self.x + dx >= 384.0 or self.x + dx <= 0.0:
+                x = 0
+            if self.y + dy >= 448.0 or self.y + dy <= 0.0:
+                y = 0
+
+
+
         # Move position (center)
-        self.x += dx
-        self.y += dy
+        self.x += x
+        self.y += y
         # Adjust collision boxes
         self.x1 = self.x - self.width / 2
         self.x2 = self.x + self.width / 2
         self.y1 = self.y - self.height / 2
         self.y2 = self.y + self.height / 2
+
+
 
     def aabb(self, other):
         # Circular instead of AABB
@@ -214,7 +227,7 @@ class collision_checker:
         # print("AABB VALUE", math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0)), self.height)
         if (
             math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
-            < self.height
+            <= self.height
         ):  # FIXME: circular distance isn't working
             # print(f"Collision between {self.name} and {other.name}")
             return True
