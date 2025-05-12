@@ -248,7 +248,7 @@ def cvoa_algo(player, objects):
     
     CHECK_FRAMES = 20 #amount of frames to check for collision
 
-    MAX_FRAMES = CHECK_FRAMES + 1
+    # MAX_FRAMES = CHECK_FRAMES + 1
     MAX_FRAME_DIRS = []
 
     MAX_FRAMES = -1
@@ -311,6 +311,7 @@ def movement(inputs, player, objects):
             x, y = inputs["PLAYER_MOVEMENT"] #Get player inputs
 
             # STOP player from moving outside of bounds
+            #FIXME: Make this variable
             if player.x + x >= 384 or player.x + x <= 0:
                 x = 0
             if player.y + y >= 448 or player.y + y <= 0:
@@ -343,21 +344,21 @@ def movement(inputs, player, objects):
                 object.update()
             objects.append(object)
         cnt += 1
-    # move all other objects
-    for object in objects:
-        if type(object) is Entity:  # bullets and misc
-            if object.name == "player":  # skip player
-                continue
-            else:  # check everything else
-                if inputs["REWIND"]:
-                    object.rewind()
-                else:
-                    object.movement(object.velocity_x, object.velocity_y)
-        elif type(object) is Spawner:  # spawners
-            if inputs["REWIND"]:
-                object.update(rewind=True)
-            else:
-                object.update()
+    # # move all other objects
+    # for object in objects:
+    #     if type(object) is Entity:  # bullets and misc
+    #         if object.name == "player":  # skip player
+    #             continue
+    #         else:  # check everything else
+    #             if inputs["REWIND"]:
+    #                 object.rewind()
+    #             else:
+    #                 object.movement(object.velocity_x, object.velocity_y)
+    #     elif type(object) is Spawner:  # spawners
+    #         if inputs["REWIND"]:
+    #             object.update(rewind=True)
+    #         else:
+    #             object.update()
 
 
 def game_collision(player, objects):
@@ -418,7 +419,7 @@ def main():
     prev_time = datetime.datetime.now()
 
     while CMD_INPUT != "END":  # game loop
-        if (datetime.datetime.now() - prev_time).total_seconds() > 5:
+        if (datetime.datetime.now() - prev_time).total_seconds() > 1:
             bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
             game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
             prev_time = datetime.datetime.now()
