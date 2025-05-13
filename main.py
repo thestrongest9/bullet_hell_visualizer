@@ -168,8 +168,8 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         for pt in objects:
             if type(pt) is Entity and pt.name != "player":
                 min_dist = min(min_dist, euclidean_distance(gp, pt.position()))
-                max_dist = max(max_dist, euclidean_distance(gp, pt.position()))
         scored_points.append((min_dist, gp))
+        max_dist = max(min_dist, max_dist)
 
     scored_points.sort(reverse=True)
 
@@ -196,7 +196,7 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         # print("CNETER", center)
         temp = VisualElement("Void Center", x, y, 2, 2, "purple")
         # print("dist", dist/max_dist)
-        val = int(255 * (dist/max_dist))
+        val = int(255.0 * (dist/max_dist))
         temp.pygame_color = pygame.Color(val, val, 255, 125)
         helpers.append(temp)
     
@@ -267,7 +267,7 @@ def cvoa_algo(player, objects):
         elif dir_collision[v] == MAX_FRAMES:
             MAX_FRAME_DIRS.append(v)
 
-    print(MAX_FRAME_DIRS, MAX_FRAMES)
+    # print(MAX_FRAME_DIRS, MAX_FRAMES)
 
     # Macrododging
     #1) Calculate void centers from inverse clustering 
@@ -419,8 +419,9 @@ def main():
     prev_time = datetime.datetime.now()
 
     while CMD_INPUT != "END":  # game loop
-        if (datetime.datetime.now() - prev_time).total_seconds() > 1:
+        if (datetime.datetime.now() - prev_time).total_seconds() > 5.0:
             bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
+            bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
             game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
             prev_time = datetime.datetime.now()
             # print("NEW TIME")
