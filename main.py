@@ -294,9 +294,26 @@ def clustering(player, objects):
     pass
 
 
-def lvl_generator():
+
+#CHROMOSOME = [TIME][PREFAB][POSITION][#BULLETS][SPEED]
+#Prefab spawners
+X = Spawner(0, 0, 16, 16)
+Y = Spawner(0, 0, 16, 16)
+def lvl_generator(time=1000, init_random=True):
+    global X
+    global Y
     # Level generation component
-    pass
+    if init_random:
+        if random.random() >= 0.5:
+            prefabs = [X,Y]
+            bullet_spawner = prefabs[random.randint(0, len(prefabs)-1)]
+            bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
+            bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
+            return bullet_spawner.spawn_circular_bullets(8, 1)
+    else:
+        return []
+        
+    return []
 
 
 # Simulate movement for all objects + player in game
@@ -419,10 +436,11 @@ def main():
     prev_time = datetime.datetime.now()
 
     while CMD_INPUT != "END":  # game loop
-        if (datetime.datetime.now() - prev_time).total_seconds() > 5.0:
-            bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
-            bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
-            game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
+        if (datetime.datetime.now() - prev_time).total_seconds() > 1.0:
+            # bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
+            # bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
+            # game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
+            game_objects.extend(lvl_generator())
             prev_time = datetime.datetime.now()
             # print("NEW TIME")
 
