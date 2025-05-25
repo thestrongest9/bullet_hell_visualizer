@@ -224,6 +224,12 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
     min_dist = 32.0
     min_clumps = sys.maxsize
     max_dist = float("-inf")
+    # #Check radius - How it works:
+    # #1. square areas = (Area / num. grid points) -> ideally returns screen space divided into areas
+    # #2. math.sqrt(square areas / PI) -> equation to return radius of circle given circle's area, given divided screen space area instead.
+    # check_radius = math.sqrt( ((SCREEN_HEIGHT * SCREEN_WIDTH) / grid_resolution) / math.pi ) #SCREEN_HEIGHT / len(objects) #64
+    check_radius = 64
+    # print(check_radius)
 
     for grid_point in grid_points:
         # distance, _ = tree.query(grid_point)
@@ -237,7 +243,7 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         # Return number of objects around "grid_point" in radius "r"
         # points_in_radius = len(tree.query_ball_point(grid_point, r=player.height * 2))
         
-        points_in_radius = len(tree.query_ball_point(grid_point, r=64))
+        points_in_radius = len(tree.query_ball_point(grid_point, r=check_radius))
         # points_in_radius = len(np.all((tree.data >= [0, 0]) & (tree.data <= [100, 100]), axis=1))
         
         # x, y = grid_point
@@ -250,7 +256,24 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         elif min_clumps == points_in_radius:
             results.append(grid_point)
 
+    # Create another K-D Tree, this time with the empty areas.
+    # Get only the empty areas with the most amount of empty areas near it
+    # This way, the player does not go towards empty areas (blue) that do not have empty areas near it.
+    # The areas the contain a lot of empty areas area (red) theoretically should be safter, as it's clumped with more empty areas.
+    results1 = []
+    tree1 = KDTree(results)
+    max_count = -sys.maxsize
+    for result in results:
+        points_in_radius = len(tree1.query_ball_point(result, r=check_radius/2)) 
+        if max_count < points_in_radius: #Get the area with the most amount of empty areas.
+            results1.clear()
+            results1.append(result)
+            max_count = points_in_radius
+        elif max_count == points_in_radius:
+            results1.append(result)
+
     # print(results, "results")
+    # print(len(results1), len(results))
     helpers.clear() #clear list
     for grid_point in results: #visual all void centers
         x, y = grid_point
@@ -263,9 +286,24 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         
         temp = VisualElement("Void Center", x, y, 10, 10)
         temp.pygame_color = pygame.Color(125, 125, 255, 100)
+        # temp.pygame_color = pygame.Color(0, 255, 255, 200)
         helpers.append(temp)
 
-    return results
+    for grid_point in results1: #visual all void centers
+        x, y = grid_point
+        # print("Grid Point", grid_point)
+        # temp = VisualElement("Void Center", x, y, 10, 10)
+        # distance, _ = tree.query(grid_point)
+        # val = int(255.0 * (distance/max_dist))
+        # temp.pygame_color = pygame.Color(val, val, 255, 100)
+        # helpers.append(temp)
+        
+        temp = VisualElement("Void Center", x, y, 10, 10)
+        temp.pygame_color = pygame.Color(255, 0, 0, 100)
+        helpers.append(temp)
+
+
+    return results1
 
 
 
