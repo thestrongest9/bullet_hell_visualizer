@@ -29,7 +29,7 @@ def renderer_graphics(player, objects, window, helpers=[]):
 def pygame_init(SCREEN_WIDTH, SCREEN_HEIGHT):
     # function for initializing pygame functionality
 
-    surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
 
     pygame.init()
     pygame.display.init()
@@ -37,11 +37,21 @@ def pygame_init(SCREEN_WIDTH, SCREEN_HEIGHT):
 
     return surface, clock
 
+background_surface = None
+draw_surface = None
 
 def renderer_pygame(surface, clock, player, objects, helpers=[]):
     # pygame renderer
     # used for human input
-    surface.fill((0, 0, 0, 0))  # Clear screen each frame
+    global background_surface
+    global draw_surface
+    if background_surface == None and draw_surface == None:
+        background_surface = pygame.Surface((800, 600), pygame.SRCALPHA)
+        # draw_surface = pygame.Surface((800, 600))
+    
+    background_surface.fill(pygame.Color(255, 255, 255, 0))
+    # draw_surface.fill(pygame.Color('#000000'))
+    surface.fill(pygame.Color('#000000'))
 
     if type(player) is Entity:
         pygame.draw.rect(surface, player.pygame_color, player.pygame_rect)
@@ -51,7 +61,14 @@ def renderer_pygame(surface, clock, player, objects, helpers=[]):
             pygame.draw.rect(surface, object.pygame_color, object.pygame_rect)
 
     for helper in helpers:
-        pygame.draw.rect(surface, helper.pygame_color, helper.pygame_rect)
+        # print(helper.pygame_color)
+        pygame.draw.rect(background_surface, helper.pygame_color, helper.pygame_rect)
 
     clock.tick(30)  # 30 FPS
+    
+    # surface.blit(background_surface, (0, 0))
+    # surface.blit(draw_surface, (0, 0))
+    surface.blit(background_surface, (0, 0))
+
+
     pygame.display.update()

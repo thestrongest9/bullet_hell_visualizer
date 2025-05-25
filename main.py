@@ -6,6 +6,8 @@ import sys, os, pygame, re, random
 import numpy as np
 from copy import copy, deepcopy
 
+from scipy.spatial import KDTree
+
 from entity import Entity, Spawner, VisualElement
 from renderer import graphics_init, renderer_graphics, pygame_init, renderer_pygame
 
@@ -138,18 +140,80 @@ def euclidean_distance(p1, p2):
 
 draw_void_center = []
 
-def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
-    # xmin, xmax = 0, SCREEN_WIDTH
-    # ymin, ymax = 0, SCREEN_HEIGHT
-    xmin, xmax = SCREEN_WIDTH, 0
-    ymin, ymax = SCREEN_HEIGHT, 0
-    # xmin, xmax = 0, SCREEN_WIDTH
-    # ymin, ymax = SCREEN_HEIGHT, 0
+# def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
+#     # xmin, xmax = 0, SCREEN_WIDTH
+#     # ymin, ymax = 0, SCREEN_HEIGHT
+#     xmin, xmax = SCREEN_WIDTH, 0
+#     ymin, ymax = SCREEN_HEIGHT, 0
+#     # xmin, xmax = 0, SCREEN_WIDTH
+#     # ymin, ymax = SCREEN_HEIGHT, 0
 
+#     global creating_grid #Set this to global
+#     global grid_points
+#     # global helpers
+#     # grid_points = []
+#     if grid_points == []:
+#         for i in range(grid_resolution):
+#             x = xmin + i * (xmax - xmin) / (grid_resolution - 1)
+#             for j in range(grid_resolution):
+#                 y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
+#                 grid_points.append((x, y))
+#         print("Grid creation should fire only once.")
+#         creating_grid = True
+
+#     scored_points = []
+#     min_dist = float("inf")
+#     max_dist = float("-inf")
+    
+#     for gp in grid_points:
+#         min_dist = float("inf")
+#         for pt in objects:
+#             if type(pt) is Entity and pt.name != "player":
+#                 min_dist = min(min_dist, euclidean_distance(gp, pt.position()))
+#         scored_points.append((min_dist, gp))
+#         max_dist = max(min_dist, max_dist)
+
+#     scored_points.sort(reverse=True)
+
+#     # helpers.clear()
+#     void_centers = []
+#     for dist, gp in scored_points:
+#         if all(euclidean_distance(gp, existing) >= min_separation for existing in void_centers):
+#             # Append to void_centers
+#             void_centers.append(gp)
+#             # Visualize all void centers
+#             # x, y = gp
+#             # helpers.append(VisualElement("Void Center", x, y, 10, 10))
+
+#         if len(void_centers) >= num_voids:
+#             break
+
+#     helpers.clear() #clear list
+#     for center in void_centers: #visual all void centers
+#         x, y = center
+#         # print("CENTER", center)
+#         helpers.append(VisualElement("Void Center", x, y, 10, 10))
+#     for dist, gp in scored_points: #visualize all grid points
+#         x, y = gp
+#         # print("CNETER", center)
+#         temp = VisualElement("Void Center", x, y, 2, 2, "purple")
+#         # print("dist", dist/max_dist)
+#         val = int(255.0 * (dist/max_dist))
+#         temp.pygame_color = pygame.Color(val, val, 255, 125)
+#         helpers.append(temp)
+    
+#     return void_centers, scored_points
+
+
+def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
+    #uses kd-trees to return positions far away from existing positions
+    #should be relatively fast?
+    global helpers
+    
     global creating_grid #Set this to global
     global grid_points
-    # global helpers
-    # grid_points = []
+    xmin, xmax = SCREEN_WIDTH, 0
+    ymin, ymax = SCREEN_HEIGHT, 0
     if grid_points == []:
         for i in range(grid_resolution):
             x = xmin + i * (xmax - xmin) / (grid_resolution - 1)
@@ -159,50 +223,52 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         print("Grid creation should fire only once.")
         creating_grid = True
 
-    scored_points = []
-    min_dist = float("inf")
+    vals = [(object.x,object.y) for object in objects]
+    tree = KDTree(vals)
+    results = []
+
+    # min_dist = float("inf")
+    min_dist = 32.0
+    min_clumps = sys.maxsize
     max_dist = float("-inf")
-    
-    for gp in grid_points:
-        min_dist = float("inf")
-        for pt in objects:
-            if type(pt) is Entity and pt.name != "player":
-                min_dist = min(min_dist, euclidean_distance(gp, pt.position()))
-        scored_points.append((min_dist, gp))
-        max_dist = max(min_dist, max_dist)
 
-    scored_points.sort(reverse=True)
+    for grid_point in grid_points:
+        # distance, _ = tree.query(grid_point)
+        # if distance >= min_dist:
+        #     results.clear()
+        #     results.append(grid_point)
+        #     # if distance >= max_dist:
+        #     #     max_dist = distance
+        #     distance = min_dist
 
-    # helpers.clear()
-    void_centers = []
-    for dist, gp in scored_points:
-        if all(euclidean_distance(gp, existing) >= min_separation for existing in void_centers):
-            # Append to void_centers
-            void_centers.append(gp)
-            # Visualize all void centers
-            # x, y = gp
-            # helpers.append(VisualElement("Void Center", x, y, 10, 10))
+        # Return number of objects around "grid_point" in radius "r"
+        # points_in_radius = len(tree.query_ball_point(grid_point, r=player.height * 2))
+        points_in_radius = len(tree.query_ball_point(grid_point, r=64))
 
-        if len(void_centers) >= num_voids:
-            break
+        if min_clumps > points_in_radius:
+            results.clear()
+            results.append(grid_point)
+            min_clumps = points_in_radius
+        elif min_clumps == points_in_radius:
+            results.append(grid_point)
 
+    # print(results, "results")
     helpers.clear() #clear list
-    for center in void_centers: #visual all void centers
-        x, y = center
-        # print("CENTER", center)
-        helpers.append(VisualElement("Void Center", x, y, 10, 10))
-    for dist, gp in scored_points: #visualize all grid points
-        x, y = gp
-        # print("CNETER", center)
-        temp = VisualElement("Void Center", x, y, 2, 2, "purple")
-        # print("dist", dist/max_dist)
-        val = int(255.0 * (dist/max_dist))
-        temp.pygame_color = pygame.Color(val, val, 255, 125)
+    for grid_point in results: #visual all void centers
+        x, y = grid_point
+        # print("Grid Point", grid_point)
+        # temp = VisualElement("Void Center", x, y, 10, 10)
+        # distance, _ = tree.query(grid_point)
+        # val = int(255.0 * (distance/max_dist))
+        # temp.pygame_color = pygame.Color(val, val, 255, 100)
+        # helpers.append(temp)
+        
+        temp = VisualElement("Void Center", x, y, 10, 10)
+        temp.pygame_color = pygame.Color(125, 125, 255, 100)
         helpers.append(temp)
-    
-                
 
-    return void_centers, scored_points
+    return results
+
 
 
 def cvoa_algo(player, objects):
@@ -271,7 +337,8 @@ def cvoa_algo(player, objects):
 
     # Macrododging
     #1) Calculate void centers from inverse clustering 
-    void_centers, _ = macrododging_algo(player, objects)
+    # void_centers, _ = macrododging_algo(player, objects)
+    void_centers = macrododging_algo(player, objects)
     # void_centers = [(int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2))]
     #2) Calculate whichever direction will move to closest void center
     dist = float('inf')
