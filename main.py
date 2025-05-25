@@ -423,7 +423,7 @@ def lvl_generator(time=1000, init_random=True):
     # bullets_spawned = 
 
     for x in range(0, time+1):
-        if random.random() >= 0.9:
+        if random.random() >= 0.95:
             prefabs = [X,Y]
             # bullet_spawner = prefabs[random.randint(0, len(prefabs)-1)]
             bullet_spawner = Spawner(0, 0, 16, 16)
@@ -626,7 +626,7 @@ def main():
             # CVOA_TICKS += 1
             
         if (TOTAL_TICKS in lvl.keys()):
-            print(TOTAL_TICKS)
+            print("BULLET SPAWNER AT TICK: ", TOTAL_TICKS)
             temp_spawner = lvl[TOTAL_TICKS]
             game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed))
         # TOTAL_TICKS += 1
