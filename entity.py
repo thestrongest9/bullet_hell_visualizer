@@ -254,6 +254,8 @@ class Spawner:
         self.y = y
         self.width = width
         self.height = height
+        self.num_bullets = 0
+        self.bullet_speed = 0
         self.bullets = []  # List to hold all the bullets
 
     def spawn_circular_bullets(self, num_bullets, speed):
