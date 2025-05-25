@@ -138,6 +138,64 @@ def player_input(dictionary):
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
+# custom KD-tree ?
+# class KDNode:
+#     def __init__(self, points, depth=0, depth_limit=2):
+#         self.axis = depth % 2 #determines which axis to split along (0 = x, 1 = y)
+#         self.left = None
+#         self.right = None
+#         self.point = None
+#         self.points = None #only populated for non-leaf nodes
+#         self.count = len(points)
+#         self.bbox = self.compute_bbox(points)
+    
+#         if self.count <= 1 or depth >= depth_limit:
+#             self.points = points
+#             if points:
+#                 self.point = points[0]
+#             return
+    
+#         #Sort and split
+#         if (depth <= depth_limit):
+#             points.sort(key=lambda pt: pt[self.axis])
+#             median_index = len(points) // 2
+#             self.point = points[median_index] #split point
+
+#             self.left = KDNode(points[:median_index], depth+1)
+#             self.right = KDNode(points[median_index:], depth+1)
+    
+#     def compute_bbox(self, points):
+#         arr = np.array(points)
+#         min_corner = arr.min(axis=0)
+#         max_corner = arr.max(axis=0)
+#         return (min_corner, max_corner)
+    
+#     def intersects_box(self, min_corner, max_corner):
+#         node_min, node_max = self.bbox
+#         return np.all(max_corner >= node_min) and np.all(min_corner <= node_max)
+    
+#     def bbox_inside(self, min_corner, max_corner):
+#         node_min, node_max = self.bbox
+#         return np.all(node_min >= min_corner) and np.all(node_max <= max_corner)
+
+#     def count_in_box(self, min_corner, max_corner):
+#         if not self.intersects_box(min_corner, max_corner):
+#             return 0
+
+#         # Entire node is inside the box
+#         if self.bbox_inside(min_corner, max_corner):
+#             return self.count
+
+#         # If leaf node, count matching points
+#         if self.points is not None:
+#             return sum(np.all((min_corner <= pt) & (pt <= max_corner)) for pt in self.points)
+
+#         return self.left.count_in_box(min_corner, max_corner) if self.left != None else 0 + \
+#                self.right.count_in_box(min_corner, max_corner) if self.right != None else 0
+    
+
+
+
 def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
     #uses kd-trees to return positions far away from existing positions
     #should be relatively fast?
@@ -156,10 +214,12 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         print("Grid creation should fire only once.")
         creating_grid = True
 
-    vals = [(object.x,object.y) for object in objects]
+    vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.name != "player"]
     tree = KDTree(vals)
+    # tree = KDNode(vals)
     results = []
 
+    # print(grid_points)
     # min_dist = float("inf")
     min_dist = 32.0
     min_clumps = sys.maxsize
@@ -176,7 +236,12 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
 
         # Return number of objects around "grid_point" in radius "r"
         # points_in_radius = len(tree.query_ball_point(grid_point, r=player.height * 2))
+        
         points_in_radius = len(tree.query_ball_point(grid_point, r=64))
+        # points_in_radius = len(np.all((tree.data >= [0, 0]) & (tree.data <= [100, 100]), axis=1))
+        
+        # x, y = grid_point
+        # points_in_radius = tree.count_in_box(np.array([x-32, y-32]), np.array([x+32, y+32]))
 
         if min_clumps > points_in_radius:
             results.clear()
