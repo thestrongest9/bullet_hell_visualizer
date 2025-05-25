@@ -215,9 +215,17 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         creating_grid = True
 
     vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.name != "player"]
-    tree = KDTree(vals)
-    # tree = KDNode(vals)
+    
     results = []
+    tree = None
+    if (len(vals) == 0): #if this is empty then the screen has no bullets left on it.
+        vals = grid_points
+        result = grid_points
+        tree = KDTree(vals)
+    else:
+        tree = KDTree(vals)
+        # tree = KDNode(vals)
+        results = []
 
     # print(grid_points)
     # min_dist = float("inf")
@@ -346,7 +354,8 @@ def cvoa_algo(player, objects):
     
     #somehow also need to choose "best available" if no good decisions are available
     # safe_velocities = possible_velocities.copy()
-    max_t_velocity = possible_velocities[random.randint(0, len(possible_velocities)-1)]
+    # max_t_velocity = possible_velocities[random.randint(0, len(possible_velocities)-1)]
+    max_t_velocity = possible_velocities[0]
     
     CHECK_FRAMES = 20 #amount of frames to check for collision
 
@@ -405,6 +414,37 @@ Y = Spawner(0, 0, 16, 16)
 def lvl_generator(time=1000, init_random=True):
     global X
     global Y
+
+    lvl = dict()
+
+    random.seed(10)
+
+    max_bullets = 50 # FIXME: Need to somehow make better max limitation? 
+    # bullets_spawned = 
+
+    for x in range(0, time+1):
+        if random.random() >= 0.9:
+            prefabs = [X,Y]
+            # bullet_spawner = prefabs[random.randint(0, len(prefabs)-1)]
+            bullet_spawner = Spawner(0, 0, 16, 16)
+            bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
+            
+            # print(bullet_spawner.x)
+
+            bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
+            
+            
+            bullet_spawner.num_bullets = random.randint(1, 8)
+            bullet_spawner.bullet_speed = random.uniform(0.5, 2) 
+            lvl[x] = bullet_spawner
+
+            max_bullets -= bullet_spawner.num_bullets
+
+            # return bullet_spawner.spawn_circular_bullets(8, 1)
+        else:
+            max_bullets += 5
+    return lvl
+
     # Level generation component
     if init_random:
         if random.random() >= 0.5:
@@ -417,6 +457,9 @@ def lvl_generator(time=1000, init_random=True):
         return []
         
     return []
+
+def play_lvl():
+    pass
 
 
 # Simulate movement for all objects + player in game
@@ -527,7 +570,11 @@ def main():
     game_objects.append(Player)
     game_objects.append(bullet_spawner)
 
+    lvl = lvl_generator(1000)
+
     TICKS = 1
+
+    TOTAL_TICKS = 0
 
     CVOA_TICKS = -1 # Determines when new direction should be returned by CVOA. Without this output is chaotic.
 
@@ -539,16 +586,17 @@ def main():
     prev_time = datetime.datetime.now()
 
     while CMD_INPUT != "END":  # game loop
-        if (datetime.datetime.now() - prev_time).total_seconds() > 1.0:
-            # bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
-            # bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
-            # game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
-            game_objects.extend(lvl_generator())
-            prev_time = datetime.datetime.now()
-            # print("NEW TIME")
+        # if (datetime.datetime.now() - prev_time).total_seconds() > 1.0:
+        #     # bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
+        #     # bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
+        #     # game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
+            
+        #     # game_objects.extend(lvl_generator())
+
+        #     prev_time = datetime.datetime.now()
+        #     # print("NEW TIME")        
 
         # Renderer
-
         if RENDER_MODE == "GRAPHICS":
             renderer_graphics(Player, game_objects, window, helpers)
         if RENDER_MODE == "INPUT":
@@ -577,11 +625,17 @@ def main():
             #         CVOA_TICKS = 0
             # CVOA_TICKS += 1
             
+        if (TOTAL_TICKS in lvl.keys()):
+            print(TOTAL_TICKS)
+            temp_spawner = lvl[TOTAL_TICKS]
+            game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed))
+        # TOTAL_TICKS += 1
 
         # print(command_dict)
 
         # for tick in ticks: #simulate command for certain amount of ticks
         for tick in range(TICKS):
+            TOTAL_TICKS += 1
 
             if "REWIND_LIMIT" in command_dict:
                 if command_dict["REWIND_LIMIT"] == True:
