@@ -7,7 +7,7 @@ from copy import copy, deepcopy
 
 # Entity includes the Player + Projectiles (Keep it simple)
 class Entity:
-    def __init__(self, name, x, y, height, width, color="red"):
+    def __init__(self, name, x, y, height, width, color="red", type=""):
         self.name = name
         self.x = x
         self.y = y
@@ -19,6 +19,13 @@ class Entity:
         self.y2 = y + height / 2
         self.velocity_x = 0
         self.velocity_y = 0
+
+        self.type = type
+        self.CVOA_ACTIVE = False
+        self.CVOA_TICKS = -1
+        self.cvoa_return_dict = {}
+
+        self.strength = "strong"
 
         # Rect used for graphics.py rendering
         self.rect = Rectangle(
@@ -32,7 +39,7 @@ class Entity:
         self.drawn = False
 
         # self.rect.setFill("red")
-        if self.name == "player":  # set colors differently for players and bullets.
+        if self.type == "Player":  # set colors differently for players and bullets.
             self.rect.setFill("blue")
             self.pygame_color = pygame.Color("blue")
         else:
@@ -49,6 +56,8 @@ class Entity:
             self.drawn = True
 
     def aabb(self, other):
+        if self.type == "Player" and other.type == "Player":
+            return False
         # Circular instead of AABB
         # Maybe should add radius component?
         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))

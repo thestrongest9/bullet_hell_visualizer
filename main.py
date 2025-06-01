@@ -138,64 +138,6 @@ def player_input(dictionary):
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-# custom KD-tree ?
-# class KDNode:
-#     def __init__(self, points, depth=0, depth_limit=2):
-#         self.axis = depth % 2 #determines which axis to split along (0 = x, 1 = y)
-#         self.left = None
-#         self.right = None
-#         self.point = None
-#         self.points = None #only populated for non-leaf nodes
-#         self.count = len(points)
-#         self.bbox = self.compute_bbox(points)
-    
-#         if self.count <= 1 or depth >= depth_limit:
-#             self.points = points
-#             if points:
-#                 self.point = points[0]
-#             return
-    
-#         #Sort and split
-#         if (depth <= depth_limit):
-#             points.sort(key=lambda pt: pt[self.axis])
-#             median_index = len(points) // 2
-#             self.point = points[median_index] #split point
-
-#             self.left = KDNode(points[:median_index], depth+1)
-#             self.right = KDNode(points[median_index:], depth+1)
-    
-#     def compute_bbox(self, points):
-#         arr = np.array(points)
-#         min_corner = arr.min(axis=0)
-#         max_corner = arr.max(axis=0)
-#         return (min_corner, max_corner)
-    
-#     def intersects_box(self, min_corner, max_corner):
-#         node_min, node_max = self.bbox
-#         return np.all(max_corner >= node_min) and np.all(min_corner <= node_max)
-    
-#     def bbox_inside(self, min_corner, max_corner):
-#         node_min, node_max = self.bbox
-#         return np.all(node_min >= min_corner) and np.all(node_max <= max_corner)
-
-#     def count_in_box(self, min_corner, max_corner):
-#         if not self.intersects_box(min_corner, max_corner):
-#             return 0
-
-#         # Entire node is inside the box
-#         if self.bbox_inside(min_corner, max_corner):
-#             return self.count
-
-#         # If leaf node, count matching points
-#         if self.points is not None:
-#             return sum(np.all((min_corner <= pt) & (pt <= max_corner)) for pt in self.points)
-
-#         return self.left.count_in_box(min_corner, max_corner) if self.left != None else 0 + \
-#                self.right.count_in_box(min_corner, max_corner) if self.right != None else 0
-    
-
-
-
 def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
     #uses kd-trees to return positions far away from existing positions
     #should be relatively fast?
@@ -214,7 +156,7 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_sepa
         print("Grid creation should fire only once.")
         creating_grid = True
 
-    vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.name != "player"]
+    vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.type != "Player"]
     
     results = []
     tree = None
@@ -335,7 +277,7 @@ def cvoa_algo(player, objects):
         ( 1 * multiplier,  1 * multiplier), #downright
         (-1 * multiplier,  0 * multiplier), #left
         ( 1 * multiplier,  0 * multiplier), #right
-        # ( 0 * multiplier,  0 * multiplier), #stand still
+        ( 0 * multiplier,  0 * multiplier), #stand still
         #Without multiplier
         ( 0, -1), #up
         (-1, -1), #upleft
@@ -346,18 +288,33 @@ def cvoa_algo(player, objects):
         (-1,  0), #left
         ( 1,  0), #right
     ]
+
+    if player.strength == "weak":
+        possible_velocities = [
+            ( 0 * multiplier,  0 * multiplier), #stand still
+            ( 0 * multiplier, -1 * multiplier), #up
+            ( 0 * multiplier,  1 * multiplier), #down
+            (-1 * multiplier,  0 * multiplier), #left
+            ( 1 * multiplier,  0 * multiplier), #right
+            ( 0 * multiplier,  0 * multiplier), #stand still
+            #Without multiplier
+            ( 0, -1), #up
+            ( 0,  1), #down
+            (-1,  0), #left
+            ( 1,  0), #right
+        ]
     
+    CHECK_FRAMES = 20 #amount of frames to check for collision
+
     #create a dictionary of smallest distance direction needs to go to collide with something
     dir_collision = dict()
     for each in possible_velocities:
-        dir_collision[each] = float("inf")
+        dir_collision[each] = CHECK_FRAMES
     
     #somehow also need to choose "best available" if no good decisions are available
     # safe_velocities = possible_velocities.copy()
     # max_t_velocity = possible_velocities[random.randint(0, len(possible_velocities)-1)]
     max_t_velocity = possible_velocities[0]
-    
-    CHECK_FRAMES = 20 #amount of frames to check for collision
 
     # MAX_FRAMES = CHECK_FRAMES + 1
     MAX_FRAME_DIRS = []
@@ -366,7 +323,7 @@ def cvoa_algo(player, objects):
     for v in possible_velocities:
         for ob in objects:
             if type(ob) is Entity:
-                if ob.name != "player":
+                if ob.type != "Player":
                     no_collision_frames = player.check_steps_ahead(CHECK_FRAMES, ob, v)
                     if dir_collision[v] > no_collision_frames: #get the minimum amount of frames for that direction, based on collision detection with the obstacle
                         dir_collision[v] = no_collision_frames
@@ -394,7 +351,10 @@ def cvoa_algo(player, objects):
             if dist > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
                 max_t_velocity = dir
                 dist = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
-        
+
+    MAX_FRAMES = dir_collision[max_t_velocity]
+
+    # print("MAX_FRAMES: ", MAX_FRAMES, void_centers, dir_collision)
 
     dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": MAX_FRAMES}
     return dictionary
@@ -445,51 +405,42 @@ def lvl_generator(time=1000, init_random=True):
             max_bullets += 5
     return lvl
 
-    # Level generation component
-    if init_random:
-        if random.random() >= 0.5:
-            prefabs = [X,Y]
-            bullet_spawner = prefabs[random.randint(0, len(prefabs)-1)]
-            bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
-            bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
-            return bullet_spawner.spawn_circular_bullets(8, 1)
-    else:
-        return []
-        
-    return []
-
 def play_lvl():
     pass
 
 
 # Simulate movement for all objects + player in game
 # CHECK: If rewind functionality properly applied
-def movement(inputs, player, objects):
+def movement(inputs, players, objects):
     # inputs should be a dictionary value, returned from parse_input()
     # move player
-    if type(player) is Entity:  # do player movement stuff
-        if inputs["REWIND"]:  # rewind functionality
-            inputs["REWIND_LIMIT"] = player.rewind()
-        else:
-            x, y = inputs["PLAYER_MOVEMENT"] #Get player inputs
 
-            # STOP player from moving outside of bounds
-            #FIXME: Make this variable
-            if player.x + x >= 384 or player.x + x <= 0:
-                x = 0
-            if player.y + y >= 448 or player.y + y <= 0:
-                y = 0
-            player.movement(x, y)
-            # if (player.x + x >= 384 or player.x + x <= 0 or \
-            #     player.y + y >= 448 or player.y + y <= 0) == False:
-            #     player.movement(x, y)
+    for player in players:
+        if type(player) is Entity:  # do player movement stuff
+            if player.cvoa_return_dict["REWIND"]:  # rewind functionality
+                inputs["REWIND_LIMIT"] = player.rewind()
+            else:
+                x, y = player.cvoa_return_dict["PLAYER_MOVEMENT"] #Get player inputs
+
+                # print(f"{x}, {y}, {player.name}")
+
+                # STOP player from moving outside of bounds
+                #FIXME: Make this variable
+                if player.x + x >= 384 or player.x + x <= 0:
+                    x = 0
+                if player.y + y >= 448 or player.y + y <= 0:
+                    y = 0
+                player.movement(x, y)
+                # if (player.x + x >= 384 or player.x + x <= 0 or \
+                #     player.y + y >= 448 or player.y + y <= 0) == False:
+                #     player.movement(x, y)
 
     cnt = 0
     obj_len = len(objects)
     while cnt < obj_len:
         object = objects.pop(0)
         if type(object) is Entity:  # bullets and misc
-            if object.name == "player":  # skip player
+            if object.type == "Player":  # skip player
                 objects.append(object)
                 # continue
             else:  # check everything else
@@ -507,29 +458,15 @@ def movement(inputs, player, objects):
                 object.update()
             objects.append(object)
         cnt += 1
-    # # move all other objects
-    # for object in objects:
-    #     if type(object) is Entity:  # bullets and misc
-    #         if object.name == "player":  # skip player
-    #             continue
-    #         else:  # check everything else
-    #             if inputs["REWIND"]:
-    #                 object.rewind()
-    #             else:
-    #                 object.movement(object.velocity_x, object.velocity_y)
-    #     elif type(object) is Spawner:  # spawners
-    #         if inputs["REWIND"]:
-    #             object.update(rewind=True)
-    #         else:
-    #             object.update()
 
 
-def game_collision(player, objects):
+def game_collision(players, objects):
     # collision detection for objects in the game
     temp_objects = []
     for object in objects:
-        if type(object) is Entity and object.name != "player":
-            object.aabb(player)
+        if type(object) is Entity and object.type != "Player":
+            for player in players:
+                object.aabb(player)
             if object.outside_of_area() == False: #NOTE: This will become an issue with the "rewind" functionality. Do something about that later.
                 temp_objects.append(object)
         elif type(object) is Spawner:
@@ -563,12 +500,24 @@ def main():
 
     # game_objects should contain all bullets, spawners, player.
     game_objects = []  # checking all game objects
-    game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
+    # game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
 
-    Player = Entity("player", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16)
+    Player = Entity("player", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+    Player1 = Entity("player1", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+
+    Player1.strength = "weak"
+
+    Player.type = "Player"
+    Player1.type = "Player"
+
+    Player1.pygame_color = pygame.Color("orange")
 
     game_objects.append(Player)
-    game_objects.append(bullet_spawner)
+    game_objects.append(Player1)
+
+    players = []
+    players.append(Player)
+    players.append(Player1)
 
     lvl = lvl_generator(1000)
 
@@ -579,7 +528,7 @@ def main():
     CVOA_TICKS = -1 # Determines when new direction should be returned by CVOA. Without this output is chaotic.
 
     command_dict = {}
-    command_dict["CONTROL_OVERRIDE"] = True
+    command_dict["CONTROL_OVERRIDE"] = False #True
 
     cvoa_return_dict = {}
 
@@ -600,7 +549,7 @@ def main():
         if RENDER_MODE == "GRAPHICS":
             renderer_graphics(Player, game_objects, window, helpers)
         if RENDER_MODE == "INPUT":
-            renderer_pygame(surface, clock, Player, game_objects,  helpers)
+            renderer_pygame(surface, clock, players, game_objects,  helpers)
 
         if INPUT_MODE == "TERMINAL":
             command_dict = parse_input(Player)
@@ -645,20 +594,33 @@ def main():
             # print(command_dict["PLAYER_MOVEMENT"])
             if "CONTROL_OVERRIDE" in command_dict and command_dict["CONTROL_OVERRIDE"] == False:
                 if (CVOA_ACTIVE):
-                    if CVOA_TICKS == -1: #Initialize CVOA timer check
-                        cvoa_return_dict = cvoa_algo(Player, game_objects)
-                    if "MAX_FRAMES" in command_dict:
-                        if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
-                            # print("CVOA_TICKS", CVOA_TICKS)
-                            cvoa_return_dict = cvoa_algo(Player, game_objects)
-                            CVOA_TICKS = 0
-                    command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
-                    command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
-                    CVOA_TICKS += 1
+                    for player in players:
+                        if player.CVOA_TICKS == -1: #Initialize CVOA timer check
+                            player.cvoa_return_dict = cvoa_algo(player, game_objects)
+                        if "MAX_FRAMES" in player.cvoa_return_dict:
+                            # print(player.cvoa_return_dict["MAX_FRAMES"], player.CVOA_TICKS)
+                            if player.CVOA_TICKS >= player.cvoa_return_dict["MAX_FRAMES"]:
+                                # print("CVOA_TICKS", CVOA_TICKS)
+                                # print("MAX FRAMES")
+                                player.cvoa_return_dict = cvoa_algo(player, game_objects)
+                                player.CVOA_TICKS = 0
+                        # command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
+                        # command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
+                        player.CVOA_TICKS += 1
+                    # if CVOA_TICKS == -1: #Initialize CVOA timer check
+                    #     cvoa_return_dict = cvoa_algo(Player, game_objects)
+                    # if "MAX_FRAMES" in command_dict:
+                    #     if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
+                    #         # print("CVOA_TICKS", CVOA_TICKS)
+                    #         cvoa_return_dict = cvoa_algo(Player, game_objects)
+                    #         CVOA_TICKS = 0
+                    # command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
+                    # command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
+                    # CVOA_TICKS += 1
 
-            movement(command_dict, Player, game_objects)
+            movement(command_dict, players, game_objects)
             # Simluate collision
-            game_collision(Player, game_objects)
+            game_collision(players, game_objects)
 
         # renderer_pygame(surface, clock, Player, game_objects)
 

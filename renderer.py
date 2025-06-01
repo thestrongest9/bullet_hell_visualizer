@@ -40,7 +40,7 @@ def pygame_init(SCREEN_WIDTH, SCREEN_HEIGHT):
 background_surface = None
 draw_surface = None
 
-def renderer_pygame(surface, clock, player, objects, helpers=[]):
+def renderer_pygame(surface, clock, players, objects, helpers=[]):
     # pygame renderer
     # used for human input
     global background_surface
@@ -53,8 +53,9 @@ def renderer_pygame(surface, clock, player, objects, helpers=[]):
     # draw_surface.fill(pygame.Color('#000000'))
     surface.fill(pygame.Color('#000000'))
 
-    if type(player) is Entity:
-        pygame.draw.rect(surface, player.pygame_color, player.pygame_rect)
+    for player in players:
+        if type(player) is Entity:
+            pygame.draw.rect(surface, player.pygame_color, player.pygame_rect)
 
     for object in objects:
         if type(object) is Entity:
