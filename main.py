@@ -138,7 +138,7 @@ def player_input(dictionary):
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-def macrododging_algo(player, objects, num_voids=5, grid_resolution=50, min_separation=0.0):
+def macrododging_algo(player, objects, num_voids=5, grid_resolution=30, min_separation=0.0):
     #uses kd-trees to return positions far away from existing positions
     #should be relatively fast?
     global helpers
@@ -304,7 +304,7 @@ def cvoa_algo(player, objects):
             ( 1,  0), #right
         ]
     
-    CHECK_FRAMES = 20 #amount of frames to check for collision
+    CHECK_FRAMES = 10 #20 #amount of frames to check for collision
 
     #create a dictionary of smallest distance direction needs to go to collide with something
     dir_collision = dict()
@@ -504,6 +504,7 @@ def main():
 
     Player = Entity("player", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
     Player1 = Entity("player1", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+    # players = [Entity(f"player{num}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player") for num in range(0, 128)]
 
     Player1.strength = "weak"
 
@@ -519,6 +520,8 @@ def main():
     players.append(Player)
     players.append(Player1)
 
+    # players.extend()
+
     lvl = lvl_generator(1000)
 
     TICKS = 1
@@ -532,7 +535,7 @@ def main():
 
     cvoa_return_dict = {}
 
-    prev_time = datetime.datetime.now()
+    # prev_time = datetime.datetime.now()
 
     while CMD_INPUT != "END":  # game loop
         # if (datetime.datetime.now() - prev_time).total_seconds() > 1.0:
