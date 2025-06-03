@@ -65,7 +65,7 @@ def renderer_pygame(surface, clock, players, objects, helpers=[]):
         # print(helper.pygame_color)
         pygame.draw.rect(background_surface, helper.pygame_color, helper.pygame_rect)
 
-    clock.tick(30)  # 30 FPS
+    # clock.tick(30)  # 30 FPS
     
     # surface.blit(background_surface, (0, 0))
     # surface.blit(draw_surface, (0, 0))
