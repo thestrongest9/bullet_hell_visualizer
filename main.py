@@ -268,16 +268,16 @@ def cvoa_algo(player, objects):
     multiplier = 2
     #FIXME: Need to have (0, 0) option at top. or else starts moving. Need to fix somehow.
     possible_velocities = [
-        ( 0 * multiplier,  0 * multiplier), #stand still
-        ( 0 * multiplier, -1 * multiplier), #up
-        (-1 * multiplier, -1 * multiplier), #upleft
-        ( 1 * multiplier, -1 * multiplier), #upright
-        ( 0 * multiplier,  1 * multiplier), #down
-        (-1 * multiplier,  1 * multiplier), #downleft
-        ( 1 * multiplier,  1 * multiplier), #downright
-        (-1 * multiplier,  0 * multiplier), #left
-        ( 1 * multiplier,  0 * multiplier), #right
-        ( 0 * multiplier,  0 * multiplier), #stand still
+        # ( 0 * multiplier,  0 * multiplier), #stand still
+        # ( 0 * multiplier, -1 * multiplier), #up
+        # (-1 * multiplier, -1 * multiplier), #upleft
+        # ( 1 * multiplier, -1 * multiplier), #upright
+        # ( 0 * multiplier,  1 * multiplier), #down
+        # (-1 * multiplier,  1 * multiplier), #downleft
+        # ( 1 * multiplier,  1 * multiplier), #downright
+        # (-1 * multiplier,  0 * multiplier), #left
+        # ( 1 * multiplier,  0 * multiplier), #right
+        # ( 0 * multiplier,  0 * multiplier), #stand still
         #Without multiplier
         ( 0, -1), #up
         (-1, -1), #upleft
@@ -291,15 +291,15 @@ def cvoa_algo(player, objects):
 
     if player.strength == "weak":
         possible_velocities = [
-            ( 0 * multiplier,  0 * multiplier), #stand still
-            ( 0 * multiplier, -1 * multiplier), #up
-            ( 0 * multiplier,  1 * multiplier), #down
-            (-1 * multiplier,  0 * multiplier), #left
-            ( 1 * multiplier,  0 * multiplier), #right
-            ( 0 * multiplier,  0 * multiplier), #stand still
+            # ( 0 * multiplier,  0 * multiplier), #stand still
+            # ( 0 * multiplier, -1 * multiplier), #up
+            # ( 0 * multiplier,  1 * multiplier), #down
+            # (-1 * multiplier,  0 * multiplier), #left
+            # ( 1 * multiplier,  0 * multiplier), #right
+            # ( 0 * multiplier,  0 * multiplier), #stand still
             #Without multiplier
-            ( 0, -1), #up
-            ( 0,  1), #down
+            # ( 0, -1), #up
+            # ( 0,  1), #down
             (-1,  0), #left
             ( 1,  0), #right
         ]
@@ -337,24 +337,35 @@ def cvoa_algo(player, objects):
 
     # print(MAX_FRAME_DIRS, MAX_FRAMES)
 
+    direction_scores = {}
     # Macrododging
     #1) Calculate void centers from inverse clustering 
     # void_centers, _ = macrododging_algo(player, objects)
     void_centers = macrododging_algo(player, objects)
     # void_centers = [(int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2))]
     #2) Calculate whichever direction will move to closest void center
-    dist = float('inf')
+    # dist = float('inf')
     for dir in MAX_FRAME_DIRS:
+        direction_scores[dir] = float('inf')
         dir_x, dir_y = dir
         for center in void_centers:
             center_x, center_y = center
-            if dist > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
-                max_t_velocity = dir
-                dist = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
+            # if dist > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
+                # max_t_velocity = dir
+                # dist = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
+            score = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
+            if (direction_scores[dir] > score):
+                direction_scores[dir] = score
+
+    max_t_velocity = min(direction_scores, key=direction_scores.get)
+    print ("Check values: ", direction_scores)
+    print ("Result: ", max_t_velocity)
 
     MAX_FRAMES = dir_collision[max_t_velocity]
 
     # print("MAX_FRAMES: ", MAX_FRAMES, void_centers, dir_collision)
+
+    MAX_FRAMES = 10
 
     dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": MAX_FRAMES}
     return dictionary
@@ -383,7 +394,7 @@ def lvl_generator(time=1000, init_random=True):
     # bullets_spawned = 
 
     for x in range(0, time+1):
-        if random.random() >= 0.95:
+        if random.random() >= 0.85: #0.95
             prefabs = [X,Y]
             # bullet_spawner = prefabs[random.randint(0, len(prefabs)-1)]
             bullet_spawner = Spawner(0, 0, 16, 16)
