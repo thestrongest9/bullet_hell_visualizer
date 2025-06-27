@@ -138,7 +138,7 @@ def player_input(dictionary):
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-def macrododging_algo(player, objects, num_voids=5, grid_resolution=30, min_separation=0.0):
+def macrododging_algo(player, objects, grid_resolution=30):
     #uses kd-trees to return positions far away from existing positions
     #should be relatively fast?
     global helpers
@@ -153,52 +153,34 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=30, min_sepa
             for j in range(grid_resolution):
                 y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
                 grid_points.append((x, y))
-        print("Grid creation should fire only once.")
+        # print("Grid creation should fire only once.")
         creating_grid = True
 
+    # filter objects to exclude "Player" type objects so that player positions will not effect output
     vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.type != "Player"]
     
     results = []
     tree = None
+    # Create a KD-Tree with values for fast detection (README: Could probably use this for normal collision checking?)
     if (len(vals) == 0): #if this is empty then the screen has no bullets left on it.
         vals = grid_points
         result = grid_points
         tree = KDTree(vals)
     else:
         tree = KDTree(vals)
-        # tree = KDNode(vals)
         results = []
 
-    # print(grid_points)
-    # min_dist = float("inf")
-    min_dist = 32.0
     min_clumps = sys.maxsize
-    max_dist = float("-inf")
-    # #Check radius - How it works:
+    # #Check radius (i.e. tree.query_ball_point) - How it works:
     # #1. square areas = (Area / num. grid points) -> ideally returns screen space divided into areas
     # #2. math.sqrt(square areas / PI) -> equation to return radius of circle given circle's area, given divided screen space area instead.
     # check_radius = math.sqrt( ((SCREEN_HEIGHT * SCREEN_WIDTH) / grid_resolution) / math.pi ) #SCREEN_HEIGHT / len(objects) #64
     check_radius = 64
-    # print(check_radius)
 
     for grid_point in grid_points:
-        # distance, _ = tree.query(grid_point)
-        # if distance >= min_dist:
-        #     results.clear()
-        #     results.append(grid_point)
-        #     # if distance >= max_dist:
-        #     #     max_dist = distance
-        #     distance = min_dist
-
         # Return number of objects around "grid_point" in radius "r"
-        # points_in_radius = len(tree.query_ball_point(grid_point, r=player.height * 2))
-        
         points_in_radius = len(tree.query_ball_point(grid_point, r=check_radius))
-        # points_in_radius = len(np.all((tree.data >= [0, 0]) & (tree.data <= [100, 100]), axis=1))
-        
-        # x, y = grid_point
-        # points_in_radius = tree.count_in_box(np.array([x-32, y-32]), np.array([x+32, y+32]))
-
+        # Prioritize going to areas that are empty
         if min_clumps > points_in_radius:
             results.clear()
             results.append(grid_point)
@@ -222,32 +204,15 @@ def macrododging_algo(player, objects, num_voids=5, grid_resolution=30, min_sepa
         elif max_count == points_in_radius:
             results1.append(result)
 
-    # print(results, "results")
-    # print(len(results1), len(results))
     helpers.clear() #clear list
-    for grid_point in results: #visual all void centers
+    for grid_point in results: #visualize empty grid points
         x, y = grid_point
-        # print("Grid Point", grid_point)
-        # temp = VisualElement("Void Center", x, y, 10, 10)
-        # distance, _ = tree.query(grid_point)
-        # val = int(255.0 * (distance/max_dist))
-        # temp.pygame_color = pygame.Color(val, val, 255, 100)
-        # helpers.append(temp)
-        
-        temp = VisualElement("Void Center", x, y, 10, 10)
+        temp = VisualElement("Grid Point", x, y, 10, 10)
         temp.pygame_color = pygame.Color(125, 125, 255, 100)
-        # temp.pygame_color = pygame.Color(0, 255, 255, 200)
         helpers.append(temp)
 
-    for grid_point in results1: #visual all void centers
+    for grid_point in results1: #visualize grid points enclosed within other empty grid points
         x, y = grid_point
-        # print("Grid Point", grid_point)
-        # temp = VisualElement("Void Center", x, y, 10, 10)
-        # distance, _ = tree.query(grid_point)
-        # val = int(255.0 * (distance/max_dist))
-        # temp.pygame_color = pygame.Color(val, val, 255, 100)
-        # helpers.append(temp)
-        
         temp = VisualElement("Void Center", x, y, 10, 10)
         temp.pygame_color = pygame.Color(255, 0, 0, 100)
         helpers.append(temp)
@@ -298,13 +263,13 @@ def cvoa_algo(player, objects):
             # ( 1 * multiplier,  0 * multiplier), #right
             # ( 0 * multiplier,  0 * multiplier), #stand still
             #Without multiplier
-            # ( 0, -1), #up
-            # ( 0,  1), #down
+            ( 0, -1), #up
+            ( 0,  1), #down
             (-1,  0), #left
             ( 1,  0), #right
         ]
     
-    CHECK_FRAMES = 10 #20 #amount of frames to check for collision
+    CHECK_FRAMES = 16 #20 #amount of frames to check for collision
 
     #create a dictionary of smallest distance direction needs to go to collide with something
     dir_collision = dict()
@@ -358,14 +323,14 @@ def cvoa_algo(player, objects):
                 direction_scores[dir] = score
 
     max_t_velocity = min(direction_scores, key=direction_scores.get)
-    print ("Check values: ", direction_scores)
-    print ("Result: ", max_t_velocity)
+    # print ("Check values: ", direction_scores)
+    # print ("Result: ", max_t_velocity)
 
     MAX_FRAMES = dir_collision[max_t_velocity]
 
     # print("MAX_FRAMES: ", MAX_FRAMES, void_centers, dir_collision)
 
-    MAX_FRAMES = 10
+    # MAX_FRAMES = 16
 
     dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": MAX_FRAMES}
     return dictionary
@@ -394,7 +359,7 @@ def lvl_generator(time=1000, init_random=True):
     # bullets_spawned = 
 
     for x in range(0, time+1):
-        if random.random() >= 0.85: #0.95
+        if random.random() >= 0.85: #0.85
             prefabs = [X,Y]
             # bullet_spawner = prefabs[random.randint(0, len(prefabs)-1)]
             bullet_spawner = Spawner(0, 0, 16, 16)
@@ -402,7 +367,7 @@ def lvl_generator(time=1000, init_random=True):
             
             # print(bullet_spawner.x)
 
-            bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
+            # bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
             
             
             bullet_spawner.num_bullets = random.randint(1, 8)
@@ -589,7 +554,7 @@ def main():
             # CVOA_TICKS += 1
             
         if (TOTAL_TICKS in lvl.keys()):
-            print("BULLET SPAWNER AT TICK: ", TOTAL_TICKS)
+            # print("BULLET SPAWNER AT TICK: ", TOTAL_TICKS)
             temp_spawner = lvl[TOTAL_TICKS]
             game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed))
         # TOTAL_TICKS += 1
@@ -631,7 +596,6 @@ def main():
                     # command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
                     # command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
                     # CVOA_TICKS += 1
-
             movement(command_dict, players, game_objects)
             # Simluate collision
             game_collision(players, game_objects)
