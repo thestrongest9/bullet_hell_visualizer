@@ -175,7 +175,7 @@ def macrododging_algo(player, objects, grid_resolution=30):
     # #1. square areas = (Area / num. grid points) -> ideally returns screen space divided into areas
     # #2. math.sqrt(square areas / PI) -> equation to return radius of circle given circle's area, given divided screen space area instead.
     # check_radius = math.sqrt( ((SCREEN_HEIGHT * SCREEN_WIDTH) / grid_resolution) / math.pi ) #SCREEN_HEIGHT / len(objects) #64
-    check_radius = 64
+    check_radius = player.height #64 16
 
     for grid_point in grid_points:
         # Return number of objects around "grid_point" in radius "r"
@@ -189,14 +189,14 @@ def macrododging_algo(player, objects, grid_resolution=30):
             results.append(grid_point)
 
     # Create another K-D Tree, this time with the empty areas.
-    # Get only the empty areas with the most amount of empty areas near it
+    # Get only the empty areas with the most amount of empty space near it
     # This way, the player does not go towards empty areas (blue) that do not have empty areas near it.
     # The areas the contain a lot of empty areas area (red) theoretically should be safter, as it's clumped with more empty areas.
     results1 = []
     tree1 = KDTree(results)
     max_count = -sys.maxsize
     for result in results:
-        points_in_radius = len(tree1.query_ball_point(result, r=check_radius/2)) 
+        points_in_radius = len(tree1.query_ball_point(result, r=check_radius*2)) 
         if max_count < points_in_radius: #Get the area with the most amount of empty areas.
             results1.clear()
             results1.append(result)
@@ -216,7 +216,6 @@ def macrododging_algo(player, objects, grid_resolution=30):
         temp = VisualElement("Void Center", x, y, 10, 10)
         temp.pygame_color = pygame.Color(255, 0, 0, 100)
         helpers.append(temp)
-
 
     return results1
 
@@ -335,14 +334,6 @@ def cvoa_algo(player, objects):
     dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": MAX_FRAMES}
     return dictionary
 
-
-
-def clustering(player, objects):
-    # Cluster algorithm to help with macrododging
-    pass
-
-
-
 #CHROMOSOME = [TIME][PREFAB][POSITION][#BULLETS][SPEED]
 #Prefab spawners
 X = Spawner(0, 0, 16, 16)
@@ -407,9 +398,6 @@ def movement(inputs, players, objects):
                 if player.y + y >= 448 or player.y + y <= 0:
                     y = 0
                 player.movement(x, y)
-                # if (player.x + x >= 384 or player.x + x <= 0 or \
-                #     player.y + y >= 448 or player.y + y <= 0) == False:
-                #     player.movement(x, y)
 
     cnt = 0
     obj_len = len(objects)
@@ -465,18 +453,13 @@ def main():
     CMD_INPUT = ""
 
     # Example of how to use the Spawner to spawn circular bullets
-    player_x = SCREEN_WIDTH / 2
-    player_y = SCREEN_HEIGHT / 2
-    # bullet_spawner = Spawner(player_x, player_y)
-    bullet_spawner = Spawner(0, 0, 16, 16)
-
+    # bullet_spawner = Spawner(0, 0, 16, 16)
     # Example commands
     # bullet_spawner.spawn_circular_bullets(8, 1)  # Spawn 8 bullets at the spawner position, with speed of 2 units
     # bullet_spawner.update()  # Update all bullets' positions
 
-    # game_objects should contain all bullets, spawners, player.
+    # The variable "game_objects" should contain all bullets, spawners, player.
     game_objects = []  # checking all game objects
-    # game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
 
     Player = Entity("player", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
     Player1 = Entity("player1", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
@@ -498,32 +481,17 @@ def main():
 
     # players.extend()
 
+    # Generate level
     lvl = lvl_generator(1000)
 
     TICKS = 1
 
     TOTAL_TICKS = 0
 
-    CVOA_TICKS = -1 # Determines when new direction should be returned by CVOA. Without this output is chaotic.
-
     command_dict = {}
     command_dict["CONTROL_OVERRIDE"] = False #True
 
-    cvoa_return_dict = {}
-
-    # prev_time = datetime.datetime.now()
-
     while CMD_INPUT != "END":  # game loop
-        # if (datetime.datetime.now() - prev_time).total_seconds() > 1.0:
-        #     # bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
-        #     # bullet_spawner.y = SCREEN_HEIGHT if random.random() >= 0.5 else 0
-        #     # game_objects.extend(bullet_spawner.spawn_circular_bullets(8, 1))
-            
-        #     # game_objects.extend(lvl_generator())
-
-        #     prev_time = datetime.datetime.now()
-        #     # print("NEW TIME")        
-
         # Renderer
         if RENDER_MODE == "GRAPHICS":
             renderer_graphics(Player, game_objects, window, helpers)
@@ -534,32 +502,16 @@ def main():
             command_dict = parse_input(Player)
             if command_dict["TICKS"] != None:
                 TICKS = command_dict["TICKS"]
-                CVOA_TICKS = -1
                 continue  # restart with new tick rate
-        if INPUT_MODE == "KEYS":
+            
+        if INPUT_MODE == "KEYS": #FIXME: This needs to be fixed due to each player having their own commmand dict (i.e. player.cvoa_return_dict)
             # command_dict = player_input()
             player_input(command_dict)
-        # if INPUT_MODE == "NONE":
-        #     try:
-        #         TICKS = int(input())
-        #     except:
-        #         TICKS = 1
-            # if CVOA_TICKS == -1:
-            #     command_dict = cvoa_algo(Player, game_objects)
-            # if "MAX_FRAMES" in command_dict:
-            #     if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
-            #         print("CVOA_TICKS", CVOA_TICKS)
-            #         command_dict = cvoa_algo(Player, game_objects)
-            #         CVOA_TICKS = 0
-            # CVOA_TICKS += 1
             
-        if (TOTAL_TICKS in lvl.keys()):
+        if (TOTAL_TICKS in lvl.keys()): # Check if current time in lvl (to see if something needs to be spawned at current time)
             # print("BULLET SPAWNER AT TICK: ", TOTAL_TICKS)
-            temp_spawner = lvl[TOTAL_TICKS]
-            game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed))
-        # TOTAL_TICKS += 1
-
-        # print(command_dict)
+            temp_spawner = lvl[TOTAL_TICKS] # Get spawner(s) at this specific tick
+            game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed)) # Use the spawners
 
         # for tick in ticks: #simulate command for certain amount of ticks
         for tick in range(TICKS):
@@ -569,38 +521,20 @@ def main():
                 if command_dict["REWIND_LIMIT"] == True:
                     break
 
-            CVOA_ACTIVE = True
-            # print(command_dict["PLAYER_MOVEMENT"])
+            # Automate control of player
             if "CONTROL_OVERRIDE" in command_dict and command_dict["CONTROL_OVERRIDE"] == False:
-                if (CVOA_ACTIVE):
-                    for player in players:
-                        if player.CVOA_TICKS == -1: #Initialize CVOA timer check
-                            player.cvoa_return_dict = cvoa_algo(player, game_objects)
-                        if "MAX_FRAMES" in player.cvoa_return_dict:
-                            # print(player.cvoa_return_dict["MAX_FRAMES"], player.CVOA_TICKS)
-                            if player.CVOA_TICKS >= player.cvoa_return_dict["MAX_FRAMES"]:
-                                # print("CVOA_TICKS", CVOA_TICKS)
-                                # print("MAX FRAMES")
-                                player.cvoa_return_dict = cvoa_algo(player, game_objects)
-                                player.CVOA_TICKS = 0
-                        # command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
-                        # command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
-                        player.CVOA_TICKS += 1
-                    # if CVOA_TICKS == -1: #Initialize CVOA timer check
-                    #     cvoa_return_dict = cvoa_algo(Player, game_objects)
-                    # if "MAX_FRAMES" in command_dict:
-                    #     if CVOA_TICKS >= command_dict["MAX_FRAMES"]:
-                    #         # print("CVOA_TICKS", CVOA_TICKS)
-                    #         cvoa_return_dict = cvoa_algo(Player, game_objects)
-                    #         CVOA_TICKS = 0
-                    # command_dict["MAX_FRAMES"] = cvoa_return_dict["MAX_FRAMES"]
-                    # command_dict["PLAYER_MOVEMENT"] = cvoa_return_dict["PLAYER_MOVEMENT"]
-                    # CVOA_TICKS += 1
+                for player in players: # for each player
+                    if player.CVOA_TICKS == -1: # Initialize CVOA timer check
+                        player.cvoa_return_dict = cvoa_algo(player, game_objects)
+                    if "MAX_FRAMES" in player.cvoa_return_dict: # if CVOA timer already exists for player
+                        if player.CVOA_TICKS >= player.cvoa_return_dict["MAX_FRAMES"]: # if player's tick count (timer) has elapsed
+                            player.cvoa_return_dict = cvoa_algo(player, game_objects) # redo CVOA algorithm
+                            player.CVOA_TICKS = 0 # Reset timer
+                    player.CVOA_TICKS += 1 # count timer
+            # Simulate movement        
             movement(command_dict, players, game_objects)
             # Simluate collision
             game_collision(players, game_objects)
-
-        # renderer_pygame(surface, clock, Player, game_objects)
 
     if RENDER_MODE == "INPUT":
         pygame.quit()
