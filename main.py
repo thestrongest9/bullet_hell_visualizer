@@ -322,6 +322,11 @@ def cvoa_algo(player, objects):
                 direction_scores[dir] = score
 
     max_t_velocity = min(direction_scores, key=direction_scores.get)
+
+    # Check for directions that have same value. NOTE: Can use this to add randomization?
+    for dir in MAX_FRAME_DIRS:
+        if dir != max_t_velocity and (direction_scores[dir] == direction_scores[max_t_velocity]):
+            print (f"Same distance for {max_t_velocity} {dir} for player {player.name}")
     # print ("Check values: ", direction_scores)
     # print ("Result: ", max_t_velocity)
 
