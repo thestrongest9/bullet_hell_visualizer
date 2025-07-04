@@ -12,6 +12,7 @@ from entity import Entity, Spawner, VisualElement
 from renderer import graphics_init, renderer_graphics, pygame_init, renderer_pygame
 
 import datetime
+import time as TIME
 
 # GLOBALS
 SCREEN_HEIGHT = 448  # These are just the Touhou numbers adapted directly
@@ -352,7 +353,8 @@ def lvl_generator(time=1000, init_random=True):
 
     lvl = dict()
 
-    random.seed(10)
+    # random.seed(10)
+    random.seed(TIME.time())
 
     max_bullets = 50 # FIXME: Need to somehow make better max limitation? 
     # bullets_spawned = 
@@ -435,8 +437,8 @@ def movement(inputs, players, objects):
 def game_collision(players, objects):
     # collision detection for objects in the game
 
-    # idx = 0
-    # length = len(objects)
+    only_players = True
+
     for player in players:
         idx = 0
         length = len(objects)
@@ -446,11 +448,13 @@ def game_collision(players, objects):
             # print(idx, length, objects)
             object = objects.pop(0)
             if type(object) is Entity and object.type != "Player":
+                only_players = False
                 if object.aabb(player):
                     #
                     player.pygame_color = pygame.Color("white")
                     #add remove player functonality?
-                    players.remove(player)
+                    if player in players:
+                        players.remove(player)
                     # objects.remove(object)
                     # continue
                 elif object.outside_of_area():
@@ -459,6 +463,7 @@ def game_collision(players, objects):
                     continue
             objects.append(object)
             idx += 1
+    return only_players
 
 def main():
     RENDER_MODE = "INPUT"  # "GRAPHICS"
@@ -475,100 +480,120 @@ def main():
     # Make some method of visual output (not sure on this...)
     CMD_INPUT = ""
 
-    # Example of how to use the Spawner to spawn circular bullets
-    # bullet_spawner = Spawner(0, 0, 16, 16)
-    # Example commands
-    # bullet_spawner.spawn_circular_bullets(8, 1)  # Spawn 8 bullets at the spawner position, with speed of 2 units
-    # bullet_spawner.update()  # Update all bullets' positions
+    # Requirements for this level
+    requirements = "strong"
+    result = ""
 
-    # The variable "game_objects" should contain all bullets, spawners, player.
-    game_objects = []  # checking all game objects
-    players = []
+    while result != requirements:
+        # Generate level
+        lvl = lvl_generator(1000)
 
-    Player = Entity("player_STRONG", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
-    Player.type = "Player"
-    game_objects.append(Player)
-    players.append(Player)
+        # The variable "game_objects" should contain all bullets, spawners, player.
+        game_objects = []  # checking all game objects
+        players = []
 
-    Player1 = Entity("player_WEAK", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
-    Player1.strength = "weak"
-    Player1.type = "Player"
-    Player1.pygame_color = pygame.Color("orange")
-    game_objects.append(Player1)
-    players.append(Player1)
+        Player = Entity("player_STRONG", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+        Player.type = "Player"
+        game_objects.append(Player)
+        players.append(Player)
 
-    for i in range(10):
-        extra_player = Entity(f"player{i}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
-        if i < 4:
-            extra_player.strength = "weak"
-            extra_player.pygame_color = pygame.Color("green")
-        else:
-            extra_player.strength = "strong"
-            extra_player.pygame_color = pygame.Color("purple")
-        game_objects.append(extra_player)
-        players.append(extra_player)
-    # players = [Entity(f"player{num}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player") for num in range(0, 128)]
+        Player1 = Entity("player_WEAK", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+        Player1.strength = "weak"
+        Player1.type = "Player"
+        Player1.pygame_color = pygame.Color("orange")
+        game_objects.append(Player1)
+        players.append(Player1)
 
-    # players.extend()
+        for i in range(10):
+            # extra_player = Entity(f"player{i}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+            if i < 4:
+                extra_player = Entity(f"player{i}_WEAK", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+                # extra_player.name+"_WEAK"
+                extra_player.strength = "weak"
+                extra_player.pygame_color = pygame.Color("green")
+                game_objects.append(extra_player)
+                players.append(extra_player)
+            else:
+                extra_player = Entity(f"player{i}_STRONG", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+                # extra_player.name+"_STRONG"
+                extra_player.strength = "strong"
+                extra_player.pygame_color = pygame.Color("purple")
+                game_objects.append(extra_player)
+                players.append(extra_player)
 
-    # Generate level
-    lvl = lvl_generator(1000)
 
-    TICKS = 1
+        TICKS = 1
 
-    TOTAL_TICKS = 0
+        TOTAL_TICKS = 0
 
-    command_dict = {}
-    command_dict["CONTROL_OVERRIDE"] = False #True
+        command_dict = {}
+        command_dict["CONTROL_OVERRIDE"] = False #True
 
-    while CMD_INPUT != "END":  # game loop
-        # Renderer
-        if RENDER_MODE == "GRAPHICS":
-            renderer_graphics(Player, game_objects, window, helpers)
-        if RENDER_MODE == "INPUT":
-            renderer_pygame(surface, clock, players, game_objects,  helpers)
+        while CMD_INPUT != "END":  # game loop
+            # Renderer
+            if RENDER_MODE == "GRAPHICS":
+                renderer_graphics(Player, game_objects, window, helpers)
+            if RENDER_MODE == "INPUT":
+                renderer_pygame(surface, clock, players, game_objects,  helpers)
 
-        if INPUT_MODE == "TERMINAL":
-            command_dict = parse_input(Player)
-            if command_dict["TICKS"] != None:
-                TICKS = command_dict["TICKS"]
-                continue  # restart with new tick rate
-            
-        if INPUT_MODE == "KEYS": #FIXME: This needs to be fixed due to each player having their own commmand dict (i.e. player.cvoa_return_dict)
-            # command_dict = player_input()
-            player_input(command_dict)
-            
-        if (TOTAL_TICKS in lvl.keys()): # Check if current time in lvl (to see if something needs to be spawned at current time)
-            # print("BULLET SPAWNER AT TICK: ", TOTAL_TICKS)
-            temp_spawner = lvl[TOTAL_TICKS] # Get spawner(s) at this specific tick
-            game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed)) # Use the spawners
+            if INPUT_MODE == "TERMINAL":
+                command_dict = parse_input(Player)
+                if command_dict["TICKS"] != None:
+                    TICKS = command_dict["TICKS"]
+                    continue  # restart with new tick rate
+                
+            if INPUT_MODE == "KEYS": #FIXME: This needs to be fixed due to each player having their own commmand dict (i.e. player.cvoa_return_dict)
+                # command_dict = player_input()
+                player_input(command_dict)
+                
+            if (TOTAL_TICKS in lvl.keys()): # Check if current time in lvl (to see if something needs to be spawned at current time)
+                # print("BULLET SPAWNER AT TICK: ", TOTAL_TICKS)
+                temp_spawner = lvl[TOTAL_TICKS] # Get spawner(s) at this specific tick
+                game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed)) # Use the spawners
 
-        # for tick in ticks: #simulate command for certain amount of ticks
-        for tick in range(TICKS):
-            TOTAL_TICKS += 1
+            break_out_input_loop = False
+            # for tick in ticks: #simulate command for certain amount of ticks
+            for tick in range(TICKS):
+                TOTAL_TICKS += 1
 
-            if "REWIND_LIMIT" in command_dict:
-                if command_dict["REWIND_LIMIT"] == True:
+                if "REWIND_LIMIT" in command_dict:
+                    if command_dict["REWIND_LIMIT"] == True:
+                        break
+
+                # Automate control of player
+                if "CONTROL_OVERRIDE" in command_dict and command_dict["CONTROL_OVERRIDE"] == False:
+                    for player in players: # for each player
+                        if player.CVOA_TICKS == -1: # Initialize CVOA timer check
+                            player.cvoa_return_dict = cvoa_algo(player, game_objects)
+                        if "MAX_FRAMES" in player.cvoa_return_dict: # if CVOA timer already exists for player
+                            if player.CVOA_TICKS >= player.cvoa_return_dict["MAX_FRAMES"]: # if player's tick count (timer) has elapsed
+                                player.cvoa_return_dict = cvoa_algo(player, game_objects) # redo CVOA algorithm
+                                player.CVOA_TICKS = 0 # Reset timer
+                        player.CVOA_TICKS += 1 # count timer
+                # Simulate movement        
+                movement(command_dict, players, game_objects)
+                # Simluate collision
+                only_players = game_collision(players, game_objects)
+                if only_players == True:
+                    # get result
+                    for object in game_objects:
+                        if type(object) is Entity:
+                            if object.strength == "weak" and object not in players:
+                                result = "strong"
+                                print(result)
+                                break_out_input_loop = True
+                            elif object.strength == "strong" and object not in players:
+                                result = "unplayable for strong"
+                                print(result)
+                                break_out_input_loop = True
+                                break
                     break
+            if break_out_input_loop:
+                break
 
-            # Automate control of player
-            if "CONTROL_OVERRIDE" in command_dict and command_dict["CONTROL_OVERRIDE"] == False:
-                for player in players: # for each player
-                    if player.CVOA_TICKS == -1: # Initialize CVOA timer check
-                        player.cvoa_return_dict = cvoa_algo(player, game_objects)
-                    if "MAX_FRAMES" in player.cvoa_return_dict: # if CVOA timer already exists for player
-                        if player.CVOA_TICKS >= player.cvoa_return_dict["MAX_FRAMES"]: # if player's tick count (timer) has elapsed
-                            player.cvoa_return_dict = cvoa_algo(player, game_objects) # redo CVOA algorithm
-                            player.CVOA_TICKS = 0 # Reset timer
-                    player.CVOA_TICKS += 1 # count timer
-            # Simulate movement        
-            movement(command_dict, players, game_objects)
-            # Simluate collision
-            game_collision(players, game_objects)
-
-    if RENDER_MODE == "INPUT":
-        pygame.quit()
-    sys.exit()
+        # if RENDER_MODE == "INPUT":
+        #     pygame.quit()
+        # sys.exit()
 
     
 
