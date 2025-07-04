@@ -447,16 +447,17 @@ def game_collision(players, objects):
             object = objects.pop(0)
             if type(object) is Entity and object.type != "Player":
                 if object.aabb(player):
+                    #
+                    player.pygame_color = pygame.Color("white")
                     #add remove player functonality?
                     players.remove(player)
                     # objects.remove(object)
-                    continue
+                    # continue
                 elif object.outside_of_area():
                     # objects.remove(object)
                     idx += 1
                     continue
-                else:
-                    objects.append(object)
+            objects.append(object)
             idx += 1
 
 def main():
@@ -486,25 +487,27 @@ def main():
 
     Player = Entity("player_STRONG", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
     Player.type = "Player"
+    game_objects.append(Player)
+    players.append(Player)
 
     Player1 = Entity("player_WEAK", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
     Player1.strength = "weak"
     Player1.type = "Player"
     Player1.pygame_color = pygame.Color("orange")
+    game_objects.append(Player1)
+    players.append(Player1)
 
     for i in range(10):
         extra_player = Entity(f"player{i}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
-        extra_player.strength = "weak"
-        extra_player.pygame_color = pygame.Color("green")
+        if i < 4:
+            extra_player.strength = "weak"
+            extra_player.pygame_color = pygame.Color("green")
+        else:
+            extra_player.strength = "strong"
+            extra_player.pygame_color = pygame.Color("purple")
         game_objects.append(extra_player)
         players.append(extra_player)
     # players = [Entity(f"player{num}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player") for num in range(0, 128)]
-
-    game_objects.append(Player)
-    game_objects.append(Player1)
-
-    players.append(Player)
-    players.append(Player1)
 
     # players.extend()
 
