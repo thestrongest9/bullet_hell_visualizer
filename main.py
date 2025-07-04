@@ -321,7 +321,11 @@ def cvoa_algo(player, objects):
             if (direction_scores[dir] > score):
                 direction_scores[dir] = score
 
-    max_t_velocity = min(direction_scores, key=direction_scores.get)
+    # Epsilon greedy
+    if random.random() < 0.05:
+        max_t_velocity = random.choice(list(direction_scores.keys()))
+    else:
+        max_t_velocity = min(direction_scores, key=direction_scores.get)
 
     # Check for directions that have same value. NOTE: Can use this to add randomization?
     for dir in MAX_FRAME_DIRS:
@@ -431,16 +435,30 @@ def movement(inputs, players, objects):
 
 def game_collision(players, objects):
     # collision detection for objects in the game
-    temp_objects = []
-    for object in objects:
-        if type(object) is Entity and object.type != "Player":
-            for player in players:
-                object.aabb(player)
-            if object.outside_of_area() == False: #NOTE: This will become an issue with the "rewind" functionality. Do something about that later.
-                temp_objects.append(object)
-        elif type(object) is Spawner:
-            object.spawner_detect_collision(player)
-    objects = temp_objects
+
+    # idx = 0
+    # length = len(objects)
+    for player in players:
+        idx = 0
+        length = len(objects)
+        if length == 0:
+            continue
+        while idx < length:
+            # print(idx, length, objects)
+            object = objects.pop(0)
+            if type(object) is Entity and object.type != "Player":
+                if object.aabb(player):
+                    #add remove player functonality?
+                    players.remove(player)
+                    # objects.remove(object)
+                    continue
+                elif object.outside_of_area():
+                    # objects.remove(object)
+                    idx += 1
+                    continue
+                else:
+                    objects.append(object)
+            idx += 1
 
 def main():
     RENDER_MODE = "INPUT"  # "GRAPHICS"
@@ -465,9 +483,17 @@ def main():
 
     # The variable "game_objects" should contain all bullets, spawners, player.
     game_objects = []  # checking all game objects
+    players = []
 
     Player = Entity("player", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
     Player1 = Entity("player1", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+
+    for i in range(10):
+        extra_player = Entity(f"player{i}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+        extra_player.strength = "weak"
+        extra_player.pygame_color = pygame.Color("green")
+        game_objects.append(extra_player)
+        players.append(extra_player)
     # players = [Entity(f"player{num}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player") for num in range(0, 128)]
 
     Player1.strength = "weak"
@@ -480,7 +506,6 @@ def main():
     game_objects.append(Player)
     game_objects.append(Player1)
 
-    players = []
     players.append(Player)
     players.append(Player1)
 
