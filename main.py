@@ -302,35 +302,34 @@ def cvoa_algo(player, objects):
     # print(MAX_FRAME_DIRS, MAX_FRAMES)
 
     direction_scores = {}
-    # Macrododging
-    #1) Calculate void centers from inverse clustering 
-    # void_centers, _ = macrododging_algo(player, objects)
-    void_centers = macrododging_algo(player, objects)
-    # void_centers = [(int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2))]
-    #2) Calculate whichever direction will move to closest void center
-    # dist = float('inf')
-    for dir in MAX_FRAME_DIRS:
-        direction_scores[dir] = float('inf')
-        dir_x, dir_y = dir
-        for center in void_centers:
-            center_x, center_y = center
-            # if dist > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
-                # max_t_velocity = dir
-                # dist = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
-            score = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
-            if (direction_scores[dir] > score):
-                direction_scores[dir] = score
-
     # Epsilon greedy
     if random.random() < 0.05:
-        max_t_velocity = random.choice(list(direction_scores.keys()))
+        max_t_velocity = random.choice(list(MAX_FRAME_DIRS))
     else:
+        # Macrododging
+        #1) Calculate void centers from inverse clustering 
+        # void_centers, _ = macrododging_algo(player, objects)
+        void_centers = macrododging_algo(player, objects)
+        # void_centers = [(int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2))]
+        #2) Calculate whichever direction will move to closest void center
+        # dist = float('inf')
+        for dir in MAX_FRAME_DIRS:
+            direction_scores[dir] = float('inf')
+            dir_x, dir_y = dir
+            for center in void_centers:
+                center_x, center_y = center
+                # if dist > euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y]):
+                    # max_t_velocity = dir
+                    # dist = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
+                score = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
+                if (direction_scores[dir] > score):
+                    direction_scores[dir] = score
         max_t_velocity = min(direction_scores, key=direction_scores.get)
 
     # Check for directions that have same value. NOTE: Can use this to add randomization?
-    for dir in MAX_FRAME_DIRS:
-        if dir != max_t_velocity and (direction_scores[dir] == direction_scores[max_t_velocity]):
-            print (f"Same distance for {max_t_velocity} {dir} for player {player.name}")
+    # for dir in MAX_FRAME_DIRS:
+    #     if dir != max_t_velocity and (direction_scores[dir] == direction_scores[max_t_velocity]):
+    #         print (f"Same distance for {max_t_velocity} {dir} for player {player.name}")
     # print ("Check values: ", direction_scores)
     # print ("Result: ", max_t_velocity)
 
@@ -485,8 +484,13 @@ def main():
     game_objects = []  # checking all game objects
     players = []
 
-    Player = Entity("player", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
-    Player1 = Entity("player1", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+    Player = Entity("player_STRONG", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+    Player.type = "Player"
+
+    Player1 = Entity("player_WEAK", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+    Player1.strength = "weak"
+    Player1.type = "Player"
+    Player1.pygame_color = pygame.Color("orange")
 
     for i in range(10):
         extra_player = Entity(f"player{i}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
@@ -495,13 +499,6 @@ def main():
         game_objects.append(extra_player)
         players.append(extra_player)
     # players = [Entity(f"player{num}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player") for num in range(0, 128)]
-
-    Player1.strength = "weak"
-
-    Player.type = "Player"
-    Player1.type = "Player"
-
-    Player1.pygame_color = pygame.Color("orange")
 
     game_objects.append(Player)
     game_objects.append(Player1)
