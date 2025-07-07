@@ -354,7 +354,10 @@ def lvl_generator(time=1000, init_random=True):
     lvl = dict()
 
     # random.seed(10)
-    random.seed(TIME.time())
+    seed = TIME.time()
+    # seed = 1751870909.2743487
+    random.seed(seed)
+    print(f"Seed used: {seed}")
 
     max_bullets = 50 # FIXME: Need to somehow make better max limitation? 
     # bullets_spawned = 
