@@ -304,7 +304,7 @@ def cvoa_algo(player, objects):
 
     direction_scores = {}
     # Epsilon greedy
-    if random.random() < 0.05:
+    if random.random() <= 0.05:
         max_t_velocity = random.choice(list(MAX_FRAME_DIRS))
     else:
         # Macrododging
@@ -470,10 +470,13 @@ def game_collision(players, objects):
     return only_players
 
 def main():
+    #Pygame mode
     RENDER_MODE = "INPUT"  # "GRAPHICS"
+    INPUT_MODE = "KEYS"
+
+    #Graphics.py mode
     # RENDER_MODE = "GRAPHICS"
     # INPUT_MODE = "TERMINAL" #"TERMINAL" #KEYS
-    INPUT_MODE = "KEYS"
 
     # initialize render(s)
     if RENDER_MODE == "GRAPHICS":
@@ -496,17 +499,17 @@ def main():
         game_objects = []  # checking all game objects
         players = []
 
-        Player = Entity("player_STRONG", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
-        Player.type = "Player"
-        game_objects.append(Player)
-        players.append(Player)
+        # Player = Entity("player_STRONG", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+        # Player.type = "Player"
+        # game_objects.append(Player)
+        # players.append(Player)
 
-        Player1 = Entity("player_WEAK", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
-        Player1.strength = "weak"
-        Player1.type = "Player"
-        Player1.pygame_color = pygame.Color("orange")
-        game_objects.append(Player1)
-        players.append(Player1)
+        # Player1 = Entity("player_WEAK", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
+        # Player1.strength = "weak"
+        # Player1.type = "Player"
+        # Player1.pygame_color = pygame.Color("orange")
+        # game_objects.append(Player1)
+        # players.append(Player1)
 
         for i in range(10):
             # extra_player = Entity(f"player{i}", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, type="Player")
