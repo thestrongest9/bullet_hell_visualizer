@@ -457,6 +457,7 @@ def game_collision(players, objects):
                     player.pygame_color = pygame.Color("white")
                     #add remove player functonality?
                     if player in players:
+                        print(f"Player: {player.name} end at {player.TIME_ALIVE}")
                         players.remove(player)
                     # objects.remove(object)
                     # continue
@@ -566,6 +567,7 @@ def main():
                 # Automate control of player
                 if "CONTROL_OVERRIDE" in command_dict and command_dict["CONTROL_OVERRIDE"] == False:
                     for player in players: # for each player
+                        player.TIME_ALIVE += 1
                         if player.CVOA_TICKS == -1: # Initialize CVOA timer check
                             player.cvoa_return_dict = cvoa_algo(player, game_objects)
                         if "MAX_FRAMES" in player.cvoa_return_dict: # if CVOA timer already exists for player

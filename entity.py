@@ -24,6 +24,7 @@ class Entity:
         self.CVOA_ACTIVE = False
         self.CVOA_TICKS = -1
         self.cvoa_return_dict = {}
+        self.TIME_ALIVE = 0
 
         self.strength = "strong"
 
