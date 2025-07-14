@@ -14,6 +14,9 @@ from renderer import graphics_init, renderer_graphics, pygame_init, renderer_pyg
 import datetime
 import time as TIME
 
+# import threading
+import multiprocessing
+
 # GLOBALS
 SCREEN_HEIGHT = 448  # These are just the Touhou numbers adapted directly
 SCREEN_WIDTH = 384
@@ -394,9 +397,13 @@ def create_players(num_weak=1, num_strong=1):
         created_players.append(extra_player)
     return created_players
 
-def play_lvl():
+def play_lvl(queue):
     # Setup all players and game objects
+    total_weak = 4
+    total_strong = 4
+
     players = create_players(4, 4)
+    all_players = copy(players)
     game_objects = copy(players)
 
     #Use pygame renderer
@@ -414,8 +421,14 @@ def play_lvl():
 
     only_players = False # Are there only players left on screen?
 
-    while True: # In simulation!
-        print(TOTAL_TICKS)
+    running = True
+    while running: # In simulation!
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # print(TOTAL_TICKS)
         renderer_pygame(surface, clock, players, game_objects, helpers)
 
         if TOTAL_TICKS in lvl.keys():
@@ -449,6 +462,8 @@ def play_lvl():
             break
         
         TOTAL_TICKS += 1 #increment simulation ticks
+
+    pygame.quit() 
     
     # When simulation is finished (i.e. no other objects other than players)
     # Analyze results:
@@ -459,19 +474,25 @@ def play_lvl():
     data["weak_dead"] = 0
     data["strong_dead"] = 0
     data["seed"] = seed
+    data["total_weak"] = total_weak
+    data["total_strong"] = total_strong
     #FIXME: Need some way of storing level data?
 
-    for player in players:
+    for player in all_players:
         if player.strength == "weak":
             data["weak_times"].append(player.TIME_ALIVE)
-            if player not in game_objects:
+            if player not in players:
                 data["weak_dead"] += 1
         elif player.strength == "strong":
             data["strong_times"].append(player.TIME_ALIVE)
-            if player not in game_objects:
+            if player not in players:
                 data["strong_dead"] += 1
 
-    return data
+    # return data
+    try:
+        queue.put_nowait(data)
+    except:
+        print("ERROR IN PUT IN QUEUE")
 
 # Simulate movement for all objects + player in game
 # CHECK: If rewind functionality properly applied
@@ -521,7 +542,7 @@ def game_collision(players, objects):
         while idx < length:
             # print(idx, length, objects)
             object = objects.pop(0)
-            if type(object) is Entity and object.type != "Player":
+            if type(object) is Entity and object.type == "Bullet":
                 only_players = False
                 if object.aabb(player):
                     #
@@ -541,7 +562,35 @@ def game_collision(players, objects):
     return only_players
 
 def main():
-    play_lvl()
+    queue = multiprocessing.Queue()
+    processes = []
+    for _ in range(4):
+        process = multiprocessing.Process(target=play_lvl, args=(queue,))
+        process.start()
+        processes.append(process)
+        # TIME.sleep(1)
+    # TIME.sleep(1)
+    goal = False
+    while goal == False:
+        # print("HERE?")
+        running_procs = False
+        for process in processes[::]:
+            if process.is_alive():
+                running_procs = True
+            else:
+                if process in processes:
+                    processes.remove(process)
+
+        # GET from queue
+        try:
+            data = queue.get_nowait()
+            print(data)
+        except:
+            pass
+
+        
+        if running_procs == False:
+            break
 
     
 

@@ -280,7 +280,7 @@ class Spawner:
             bullet_velocity_y = math.sin(angle) * speed
             # Create a bullet entity at the center (self.x, self.y) with initial velocity
             bullet = Entity(
-                "Bullet", self.x, self.y, self.width, self.height, color="blue"
+                "Bullet", self.x, self.y, self.width, self.height, color="blue", type="Bullet"
             )  # Simple bullet size (5x5)
             bullet.velocity_x = bullet_velocity_x
             bullet.velocity_y = bullet_velocity_y
