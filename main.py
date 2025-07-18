@@ -397,7 +397,7 @@ def create_players(num_weak=1, num_strong=1):
         created_players.append(extra_player)
     return created_players
 
-def play_lvl(queue):
+def play_lvl(queue, lvl=None):
     # Setup all players and game objects
     total_weak = 4
     total_strong = 4
@@ -413,7 +413,8 @@ def play_lvl(queue):
     # Generate the level
     seed = TIME.time()
     lvl_length = 1000
-    lvl = lvl_generator(lvl_length, seed)
+    if lvl == None:
+        lvl = lvl_generator(lvl_length, seed)
 
     TOTAL_TICKS = 0 # Total number of ticks over simulation
 
@@ -473,9 +474,11 @@ def play_lvl(queue):
     data["strong_times"] = []
     data["weak_dead"] = 0
     data["strong_dead"] = 0
-    data["seed"] = seed
+    data["seed"] = seed # FIXME: Need to do this to something else.
     data["total_weak"] = total_weak
     data["total_strong"] = total_strong
+    if "lvl" not in data.keys():
+        data["lvl"] = lvl
     #FIXME: Need some way of storing level data?
 
     for player in all_players:
@@ -540,7 +543,6 @@ def game_collision(players, objects):
         if length == 0:
             continue
         while idx < length:
-            # print(idx, length, objects)
             object = objects.pop(0)
             if type(object) is Entity and object.type == "Bullet":
                 only_players = False
@@ -549,22 +551,107 @@ def game_collision(players, objects):
                     player.pygame_color = pygame.Color("white")
                     #add remove player functonality?
                     if player in players:
-                        print(f"Player: {player.name} end at {player.TIME_ALIVE}")
+                        # print(f"Player: {player.name} end at {player.TIME_ALIVE}")
                         players.remove(player)
-                    # objects.remove(object)
-                    # continue
                 elif object.outside_of_area():
-                    # objects.remove(object)
                     idx += 1
                     continue
             objects.append(object)
             idx += 1
     return only_players
 
+def crossover(lvl1, lvl2, time=1000):
+
+    random.seed(TIME.time())
+
+    cross_lvl = dict()
+
+    for t in range(time+1):
+        obj1 = None
+        if t in lvl1.keys():
+            obj1 = lvl1[t]
+        obj2 = None
+        if t in lvl2.keys():
+            obj2 = lvl2[t]
+
+        if obj1 == None and obj2 == None:
+            continue
+        else:
+            if random.random() >= 0.5:
+                if obj1 != None:
+                    cross_lvl[t] = obj1
+            else:
+                if obj2 != None:
+                    cross_lvl[t] = obj2
+    
+    return cross_lvl
+    
+def genetic_algo(data_set):
+    # data["weak_times"] = []
+    # data["strong_times"] = []
+    # data["weak_dead"] = 0
+    # data["strong_dead"] = 0
+    # data["seed"] = seed
+    # data["total_weak"] = total_weak
+    # data["total_strong"] = total_strong
+    # data["lvl"] = lvl
+
+    # total_lvls = len(data_set)
+
+    for lvl in data_set:
+        lvl["weak_time_avg"] = sum(lvl["weak_times"]) / len(lvl["weak_times"])
+        lvl["strong_time_avg"] = sum(lvl["strong_times"]) / len(lvl["strong_times"])
+
+    # Determine fitness
+    drop_num = int(len(data_set) * 0.25) # Drop lowest 25%
+
+    # for each in lvl_set:
+    #     print(each["seed"], end=" ")
+
+    # Fitness Function:
+    data_set = sorted(data_set, key=lambda lvl: lvl["strong_time_avg"] - lvl["weak_time_avg"])
+    # data_set = sorted(data_set, key=lambda lvl: lvl["weak_dead"] - lvl["strong_dead"])
+    # data_set = sorted(data_set, key=lambda lvl: lvl["strong_time_avg"])
+
+    # Remove bottom 25%
+    for _ in range(drop_num):
+        data_set.pop(0)
+
+    random.seed(TIME.time())
+
+    lvl_set = []
+
+    while len(lvl_set) <= len(data_set):
+        lvl1 = random.choice(data_set)      # Mix randomly between "good" generations
+        data_set.remove(lvl1)
+        # lvl1 = data_set.pop(-1)           # Mix only strongest
+        lvl2 = random.choice(data_set)
+        while lvl2 == lvl1:
+            lvl2 = random.choice(data_set)
+        data_set.append(lvl1)
+        lvl1 = lvl1["lvl"]
+        lvl2 = lvl2["lvl"]
+        cross_lvl = crossover(lvl1, lvl2)
+        lvl_set.append(cross_lvl)
+
+    # print("\n")
+    # for each in lvl_set:
+    #     print(each["seed"], end=" ")
+    # print("\n")
+
+    # Crossover
+
+    # Mutation
+
+    return lvl_set
+
+
+
 def main():
+    data_set = []
     queue = multiprocessing.Queue()
     processes = []
-    for _ in range(4):
+    for _ in range(10):
         process = multiprocessing.Process(target=play_lvl, args=(queue,))
         process.start()
         processes.append(process)
@@ -584,13 +671,36 @@ def main():
         # GET from queue
         try:
             data = queue.get_nowait()
-            print(data)
+            data_set.append(data)
+            # print(data)
+
+            # for key in data.keys():
+            #     temp = ""
+            #     if key != "lvl":
+            #         temp += f"{key} : {data[key]} "
+            #     print(temp)
+            
+            # Ratio of "Alive:Total"
+            ratio_weak = (data["total_weak"] - data["weak_dead"])/data["total_weak"]
+            ratio_strong = (data["total_strong"] - data["strong_dead"])/data["total_strong"]
+
+            print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strong}")
+
+            # FIXME: Need to save all results to some JSON file.
         except:
             pass
 
         
         if running_procs == False:
-            break
+            lvl_set = genetic_algo(data_set)
+            data_set.clear()
+            # break
+            for lvl in lvl_set:
+                process = multiprocessing.Process(target=play_lvl, args=(queue,lvl))
+                process.start()
+                processes.append(process)
+            pass
+
 
     
 
