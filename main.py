@@ -9,6 +9,7 @@ from copy import copy, deepcopy
 from scipy.spatial import KDTree
 
 from entity import Entity, Spawner, VisualElement
+from level import Level
 from renderer import graphics_init, renderer_graphics, pygame_init, renderer_pygame
 
 import datetime
@@ -411,10 +412,15 @@ def play_lvl(queue, lvl=None):
     # renderer_pygame(surface, clock, players, game_objects, helpers)
     
     # Generate the level
-    seed = TIME.time()
+    # seed = TIME.time()
+    # lvl_length = 1000
+    # if lvl == None:
+    #     lvl = lvl_generator(lvl_length, seed)
+    
     lvl_length = 1000
     if lvl == None:
-        lvl = lvl_generator(lvl_length, seed)
+        lvl = Level()
+        lvl.generate()
 
     TOTAL_TICKS = 0 # Total number of ticks over simulation
 
@@ -432,8 +438,8 @@ def play_lvl(queue, lvl=None):
         # print(TOTAL_TICKS)
         renderer_pygame(surface, clock, players, game_objects, helpers)
 
-        if TOTAL_TICKS in lvl.keys():
-            temp_spawner = lvl[TOTAL_TICKS] # Get spawner(s) at this specific tick
+        if TOTAL_TICKS in lvl.dict.keys():
+            temp_spawner = lvl.dict[TOTAL_TICKS] # Get spawner(s) at this specific tick
             game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed)) # Use the spawners
         
         no_players_left = True
@@ -468,32 +474,35 @@ def play_lvl(queue, lvl=None):
     
     # When simulation is finished (i.e. no other objects other than players)
     # Analyze results:
-    data = dict()
+    # data = dict()
 
-    data["weak_times"] = []
-    data["strong_times"] = []
-    data["weak_dead"] = 0
-    data["strong_dead"] = 0
-    data["seed"] = seed # FIXME: Need to do this to something else.
-    data["total_weak"] = total_weak
-    data["total_strong"] = total_strong
-    if "lvl" not in data.keys():
-        data["lvl"] = lvl
+    # data["weak_times"] = []
+    # data["strong_times"] = []
+    # data["weak_dead"] = 0
+    # data["strong_dead"] = 0
+    # data["seed"] = seed # FIXME: Need to do this to something else.
+    # data["total_weak"] = total_weak
+    # data["total_strong"] = total_strong
+    lvl.total_strg = total_strong
+    lvl.total_weak = total_weak
+    # if "lvl" not in data.keys():
+    #     data["lvl"] = lvl
     #FIXME: Need some way of storing level data?
 
     for player in all_players:
         if player.strength == "weak":
-            data["weak_times"].append(player.TIME_ALIVE)
+            lvl.weak_times.append(player.TIME_ALIVE)
             if player not in players:
-                data["weak_dead"] += 1
+                lvl.weak_dead += 1
         elif player.strength == "strong":
-            data["strong_times"].append(player.TIME_ALIVE)
+            lvl.strg_times.append(player.TIME_ALIVE)
             if player not in players:
-                data["strong_dead"] += 1
+                lvl.strg_dead += 1
 
     # return data
     try:
-        queue.put_nowait(data)
+        lvl.tested = True
+        queue.put_nowait(lvl)
     except:
         print("ERROR IN PUT IN QUEUE")
 
@@ -597,10 +606,11 @@ def genetic_algo(data_set):
     # data["lvl"] = lvl
 
     # total_lvls = len(data_set)
-
+    # for lvl in data_set:
+    #     lvl["weak_time_avg"] = sum(lvl["weak_times"]) / len(lvl["weak_times"])
+    #     lvl["strong_time_avg"] = sum(lvl["strong_times"]) / len(lvl["strong_times"])
     for lvl in data_set:
-        lvl["weak_time_avg"] = sum(lvl["weak_times"]) / len(lvl["weak_times"])
-        lvl["strong_time_avg"] = sum(lvl["strong_times"]) / len(lvl["strong_times"])
+        lvl.calc_stats()
 
     # Determine fitness
     drop_num = int(len(data_set) * 0.25) # Drop lowest 25%
@@ -609,7 +619,7 @@ def genetic_algo(data_set):
     #     print(each["seed"], end=" ")
 
     # Fitness Function:
-    data_set = sorted(data_set, key=lambda lvl: lvl["strong_time_avg"] - lvl["weak_time_avg"])
+    data_set = sorted(data_set, key=lambda lvl: lvl.strg_time_avg - lvl.weak_time_avg)
     # data_set = sorted(data_set, key=lambda lvl: lvl["weak_dead"] - lvl["strong_dead"])
     # data_set = sorted(data_set, key=lambda lvl: lvl["strong_time_avg"])
 
@@ -629,9 +639,10 @@ def genetic_algo(data_set):
         while lvl2 == lvl1:
             lvl2 = random.choice(data_set)
         data_set.append(lvl1)
-        lvl1 = lvl1["lvl"]
-        lvl2 = lvl2["lvl"]
-        cross_lvl = crossover(lvl1, lvl2)
+        # lvl1 = lvl1["lvl"]
+        # lvl2 = lvl2["lvl"]
+        cross_lvl = lvl1.crossover(lvl2)
+        # cross_lvl = crossover(lvl1, lvl2)
         lvl_set.append(cross_lvl)
 
     # print("\n")
@@ -681,10 +692,13 @@ def main():
             #     print(temp)
             
             # Ratio of "Alive:Total"
-            ratio_weak = (data["total_weak"] - data["weak_dead"])/data["total_weak"]
-            ratio_strong = (data["total_strong"] - data["strong_dead"])/data["total_strong"]
+            # ratio_weak = (data["total_weak"] - data["weak_dead"])/data["total_weak"]
+            # ratio_strong = (data["total_strong"] - data["strong_dead"])/data["total_strong"]
 
-            print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strong}")
+            ratio_weak = (data.total_weak - data.weak_dead) / data.total_weak
+            ratio_strg = (data.total_strg - data.strg_dead) / data.total_strg
+
+            print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strg}")
 
             # FIXME: Need to save all results to some JSON file.
         except:
