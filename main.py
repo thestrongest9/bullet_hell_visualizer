@@ -11,6 +11,7 @@ from scipy.spatial import KDTree
 from entity import Entity, Spawner, VisualElement
 from level import Level
 from renderer import graphics_init, renderer_graphics, pygame_init, renderer_pygame
+from data_visualization import Graph
 
 import datetime
 import time as TIME
@@ -662,6 +663,12 @@ def main():
     data_set = []
     queue = multiprocessing.Queue()
     processes = []
+
+    data_graph = Graph()
+    total_ratio_weak = []
+    total_ratio_strg = []
+    turn = 0
+
     for _ in range(10):
         process = multiprocessing.Process(target=play_lvl, args=(queue,))
         process.start()
@@ -698,6 +705,11 @@ def main():
             ratio_weak = (data.total_weak - data.weak_dead) / data.total_weak
             ratio_strg = (data.total_strg - data.strg_dead) / data.total_strg
 
+            total_ratio_strg.append(ratio_strg)
+            total_ratio_weak.append(ratio_weak)
+
+            data_graph.update(turn, total_ratio_weak, total_ratio_strg)
+
             print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strg}")
 
             # FIXME: Need to save all results to some JSON file.
@@ -706,6 +718,10 @@ def main():
 
         
         if running_procs == False:
+
+            data_graph.update(turn, total_ratio_weak, total_ratio_strg)
+            turn += 1
+
             lvl_set = genetic_algo(data_set)
             data_set.clear()
             # break
