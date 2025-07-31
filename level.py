@@ -30,6 +30,8 @@ class Level:
 
         self.length = 1000
 
+        self.spawner_cnt = 0
+
     def calc_stats(self):
         # Sets the avg + other stats if necessary
         self.weak_time_avg = sum(self.weak_times) / self.total_weak
@@ -41,6 +43,7 @@ class Level:
 
         for t in range(0, self.length+1):
             if random.random() >= 0.85: # 0.85
+                self.spawner_cnt += 1
                 x = random.randint(0, SCREEN_WIDTH)
                 bullet_spawner = Spawner(x, 0, 16, 16)
 
@@ -51,6 +54,8 @@ class Level:
     def crossover(self, othr, length=1000):
         random.seed(TIME.time())
         cross_lvl = dict()
+        spawner_cnt = 0
+        target_cnt = (self.spawner_cnt + othr.spawner_cnt) / 2
 
         ownr_keys = list(self.dict.keys())
         othr_keys = list(othr.dict.keys())
@@ -70,17 +75,25 @@ class Level:
             if key == None:
                 continue
             elif key in ownr_keys or key in othr_keys:
+                spawner_cnt += 1
                 if random.random() >= 0.5:
                     cross_lvl[key] = self.dict[key]
                 else:
                     cross_lvl[key] = othr.dict[key]
             else:
-                if random.random() >= 0.5:
+                # If for this "key" there is no equivalent then:
+                # Randomly decide if this entry will be added to crossover child
+                # The percent chance is determined by the amount of spawners already added vs the avg between two levels being crossovered
+                # Additionally this value is adjusted more (the max the value can be is 0.95), this leaves 5% chnace for addition, allowing
+                # the algorithm to explore a little.
+                if random.random() >= (spawner_cnt / target_cnt) * 0.95:
+                    spawner_cnt += 1
                     cross_lvl[key] = ref.dict[key]
             
 
-
-        return Level(cross_lvl)
+        lvl = Level(cross_lvl)
+        lvl.spawner_cnt = spawner_cnt
+        return lvl
 
         # for t in range(0, length+1):
         #     obj1 = None
