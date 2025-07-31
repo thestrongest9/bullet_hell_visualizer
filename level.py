@@ -51,6 +51,21 @@ class Level:
                 bullet_spawner.bullet_speed = random.uniform(0.5, 2)
                 self.dict[t] = bullet_spawner
 
+    def mutate(self):
+        # Mutation
+        # Changes that can be made during mutation:
+        # 1. Add/Remove spawner entries
+        #   Do this by obtaining some "ideal" spawner count, and comparing the current level's spawner count to it
+        #   from the difference between this level's spawner count and the ideal count, randomly pick some integer
+        #   if value is negative, then remove that amount of spawners from the level
+        #   else, then add that amount of spawners to the level
+        # 2. Change values in spawner entry
+        #   Depending on the fitness of this level, tweak values of randomly selected spawner entries.
+        raise NotImplementedError
+
+    def selection(self):
+        raise NotImplementedError
+
     def crossover(self, othr, length=1000):
         random.seed(TIME.time())
         cross_lvl = dict()
