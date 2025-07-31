@@ -569,32 +569,6 @@ def game_collision(players, objects):
             objects.append(object)
             idx += 1
     return only_players
-
-def crossover(lvl1, lvl2, time=1000):
-
-    random.seed(TIME.time())
-
-    cross_lvl = dict()
-
-    for t in range(time+1):
-        obj1 = None
-        if t in lvl1.keys():
-            obj1 = lvl1[t]
-        obj2 = None
-        if t in lvl2.keys():
-            obj2 = lvl2[t]
-
-        if obj1 == None and obj2 == None:
-            continue
-        else:
-            if random.random() >= 0.5:
-                if obj1 != None:
-                    cross_lvl[t] = obj1
-            else:
-                if obj2 != None:
-                    cross_lvl[t] = obj2
-    
-    return cross_lvl
     
 def genetic_algo(data_set):
     # data["weak_times"] = []
