@@ -669,7 +669,7 @@ def main():
     total_ratio_strg = []
     turn = 0
 
-    for _ in range(10):
+    for _ in range(4):
         process = multiprocessing.Process(target=play_lvl, args=(queue,))
         process.start()
         processes.append(process)
