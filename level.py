@@ -63,6 +63,8 @@ class Level:
         while len(ownr_keys) > 0 and len(othr_keys) > 0:
             key = None
             ref = self
+            # Obtain a key from a level.
+            # It should be randomly picked (to avoid frontloading levels by going through it chronologically.)
             if len(ownr_keys) > 0:
                 key = random.choice(ownr_keys)
                 ownr_keys.remove(key)
@@ -74,9 +76,9 @@ class Level:
             
             if key == None:
                 continue
-            elif key in ownr_keys or key in othr_keys:
+            elif key in ownr_keys or key in othr_keys: # key existed in both levels.
                 spawner_cnt += 1
-                if random.random() >= 0.5:
+                if random.random() >= 0.5: # randomly choose a spawner from a level
                     cross_lvl[key] = self.dict[key]
                 else:
                     cross_lvl[key] = othr.dict[key]
