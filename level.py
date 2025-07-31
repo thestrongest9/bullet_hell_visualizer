@@ -51,22 +51,53 @@ class Level:
     def crossover(self, othr, length=1000):
         random.seed(TIME.time())
         cross_lvl = dict()
-        for t in range(0, length+1):
-            obj1 = None
-            if t in self.dict.keys():
-                obj1 = self.dict[t]
-            obj2 = None
-            if t in othr.dict.keys():
-                obj1 = othr.dict[t]
+
+        ownr_keys = list(self.dict.keys())
+        othr_keys = list(othr.dict.keys())
+
+        while len(ownr_keys) > 0 and len(othr_keys) > 0:
+            key = None
+            ref = self
+            if len(ownr_keys) > 0:
+                key = random.choice(ownr_keys)
+                ownr_keys.remove(key)
+                ref = self
+            elif len(othr_keys) > 0:
+                key = random.choice(othr_keys)
+                othr_keys.remove(key)
+                ref = othr
             
-            if obj1 == None and obj2 == None:
+            if key == None:
                 continue
+            elif key in ownr_keys or key in othr_keys:
+                if random.random() >= 0.5:
+                    cross_lvl[key] = self.dict[key]
+                else:
+                    cross_lvl[key] = othr.dict[key]
             else:
                 if random.random() >= 0.5:
-                    if obj1 != None:
-                        cross_lvl[t] = obj1
-                else:
-                    if obj2 != None:
-                        cross_lvl[t] = obj2
+                    cross_lvl[key] = ref.dict[key]
+            
+
+
+        return Level(cross_lvl)
+
+        # for t in range(0, length+1):
+        #     obj1 = None
+        #     if t in self.dict.keys():
+        #         obj1 = self.dict[t]
+        #     obj2 = None
+        #     if t in othr.dict.keys():
+        #         obj1 = othr.dict[t]
+            
+        #     if obj1 == None and obj2 == None:
+        #         continue
+        #     else:
+        #         if random.random() >= 0.5:
+        #             if obj1 != None:
+        #                 cross_lvl[t] = obj1
+        #         else:
+        #             if obj2 != None:
+        #                 cross_lvl[t] = obj2
         
-        return Level(cross_lvl) # Return new level with crossed over data
+        # return Level(cross_lvl) # Return new level with crossed over data
