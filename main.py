@@ -696,6 +696,9 @@ def main():
             data_graph.update(turn, total_ratio_weak, total_ratio_strg)
             turn += 1
 
+            total_ratio_strg = []
+            total_ratio_weak = []
+
             lvl_set = genetic_algo(data_set)
             data_set.clear()
             # break
