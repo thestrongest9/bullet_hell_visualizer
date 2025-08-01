@@ -66,7 +66,7 @@ class Entity:
             math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
             <= self.height
         ):  # FIXME: circular distance isn't working
-            print(f"Collision between {self.name} and {other.name}")
+            # print(f"Collision between {self.name} and {other.name}")
             return True
         else:
             return False
@@ -274,7 +274,7 @@ class Spawner:
         spawned_bullets = []
         for i in range(num_bullets):
             # Calculate angle in radians
-            angle = math.radians(i * angle_step)
+            angle = math.radians(i * angle_step - 180)
             # Calculate the velocity components for the bullet in the x and y directions
             bullet_velocity_x = math.cos(angle) * speed
             bullet_velocity_y = math.sin(angle) * speed
@@ -362,7 +362,7 @@ class VisualElement:
         self.drawn = False
 
         
-        self.rect.setFill(color)
+        # self.rect.setFill(color)
         self.pygame_color = pygame.Color(color)
         
         
