@@ -7,6 +7,7 @@ import numpy as np
 from copy import copy, deepcopy
 
 from scipy.spatial import KDTree
+from scipy.cluster.vq import kmeans
 
 from entity import Entity, Spawner, VisualElement
 from level import Level
@@ -29,6 +30,7 @@ void_center_visuals = []
 #FIXME: Making globals here, very ugly fix this later.
 creating_grid = False
 grid_points = []
+grid_tree = None
 
 def parse_input(Player):
     CMD_INPUT = input("ENTER COMMAND HERE: ")  # accept input until stop
@@ -150,6 +152,7 @@ def macrododging_algo(player, objects, grid_resolution=30):
     global helpers
     
     global creating_grid #Set this to global
+    global grid_tree
     global grid_points
     xmin, xmax = SCREEN_WIDTH, 0
     ymin, ymax = SCREEN_HEIGHT, 0
@@ -159,12 +162,170 @@ def macrododging_algo(player, objects, grid_resolution=30):
             for j in range(grid_resolution):
                 y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
                 grid_points.append((x, y))
+        grid_tree = KDTree(grid_points)
         # print("Grid creation should fire only once.")
         creating_grid = True
 
     # filter objects to exclude "Player" type objects so that player positions will not effect output
     vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.type != "Player"]
-    
+
+    object_tree = None
+    result = []
+    if (len(vals) == 0): #if this is empty then the screen has no bullets left on it.
+        vals = grid_points
+        result = grid_points
+        object_tree = KDTree(vals)
+    else:
+        object_tree = KDTree(vals)
+
+    check_radius = player.height #64 16
+
+    helpers.clear() #clear list
+    for grid_point in grid_points:
+        if len(object_tree.query_ball_point(grid_point, r=check_radius*2)) == 0:
+            x, y = grid_point
+            temp = VisualElement("Grid Tile", x, y, 10, 10)
+            temp.pygame_color = pygame.Color(125, 125, 255, 100)
+            helpers.append(temp)
+            # helpers.append(VisualElement("Center", x, y, 10, 10))
+            result.append(grid_point)
+
+    centroids, _ = kmeans(result, 9)
+    # centroids = []
+    # distortion_val = float('inf')
+    # for num in range(1, 10):
+    #     temp, distortion = kmeans(result, num)
+    #     if distortion_val > distortion:
+    #         centroids = temp
+    #         distortion_val = distortion
+
+    for grid_point in centroids:
+        x, y = grid_point
+        helpers.append(VisualElement("Center", x, y, 10, 10))
+
+    return centroids
+
+    # object_tree = None
+    # if (len(vals) == 0): #if this is empty then the screen has no bullets left on it.
+    #     vals = grid_points
+    #     result = grid_points
+    #     object_tree = KDTree(vals)
+    # else:
+    #     object_tree = KDTree(vals)
+    #     # results = []
+
+    # heatmap = dict()
+    # obj_in_radius = dict()
+    # check_radius = player.height #64 16
+
+    # for grid_point in grid_points:
+    #     obj_in_radius[grid_point] = len(object_tree.query_ball_point(grid_point, r=check_radius*2))
+
+    # max_heat = -1
+    # results = []
+    # for grid_point in grid_points:
+    #     heat = 0
+    #     # print(grid_tree.query_ball_point(grid_point, r=check_radius))
+    #     for single_point in grid_tree.query_ball_point(grid_point, r=check_radius*2):
+    #         # print("point", grid_points[single_point])
+    #         if obj_in_radius[grid_points[single_point]] == 0:
+    #             heat += 1
+    #         # heat += obj_in_radius[grid_points[single_point]]
+    #     heatmap[grid_point] = heat
+    #     if heat > max_heat:
+    #         results.clear()
+    #         results.append(grid_point)
+    #         max_heat = heat
+    #     elif heat == max_heat:
+    #         results.append(grid_point)
+
+    # # print(max_heat)
+
+    # helpers.clear() #clear list
+    # for grid_point in grid_points: #visualize empty grid points
+    #     x, y = grid_point
+    #     temp = VisualElement("Heat Tile", x, y, 10, 10)
+    #     if max_heat > 0:
+    #         # cold_ratio = (max_heat - heatmap[grid_point]) / max_heat
+    #         cold_ratio = heatmap[grid_point] / max_heat
+    #         # pass
+    #         # print(heatmap[grid_point]/max_heat)
+    #         # print(f"{heatmap[grid_point]} / {max_heat}, {int(255 * (heatmap[grid_point]/max_heat))}")
+    #         temp.pygame_color = pygame.Color(int(125 * cold_ratio), int(125 * cold_ratio), int(255 * cold_ratio), 100)
+    #         # temp.pygame_color = pygame.Color(125, 125, heatmap[grid_point], 100)
+    #     # else:
+    #     #     temp.pygame_color = pygame.Color(125, 125, 0, 100)
+    #         helpers.append(temp)
+
+    # # centroids, distortion = kmeans(results, 4)
+    # centroids = None
+    # distortion_val = float('inf')
+    # for num in range(1, 10):
+    #     temp, distortion = kmeans(results, num)
+    #     if distortion_val > distortion:
+    #         centroids = temp
+    #         distortion_val = distortion
+
+    # for grid_point in centroids:
+    #     x, y = grid_point
+    #     helpers.append(VisualElement("Center", x, y, 10, 10))
+
+    # return results
+
+    # object_tree = None
+    # if (len(vals) == 0): #if this is empty then the screen has no bullets left on it.
+    #     vals = grid_points
+    #     result = grid_points
+    #     object_tree = KDTree(vals)
+    # else:
+    #     object_tree = KDTree(vals)
+    #     # results = []
+
+    # heatmap = dict()
+    # obj_in_radius = dict()
+    # check_radius = player.height #64 16
+
+    # for grid_point in grid_points:
+    #     obj_in_radius[grid_point] = len(object_tree.query_ball_point(grid_point, r=check_radius))
+
+    # max_heat = -1
+    # min_heat = float('inf')
+    # results = []
+    # for grid_point in grid_points:
+    #     heat = 0
+    #     # print(grid_tree.query_ball_point(grid_point, r=check_radius))
+    #     for single_point in grid_tree.query_ball_point(grid_point, r=check_radius*4):
+    #         # print("point", grid_points[single_point])
+    #         heat += obj_in_radius[grid_points[single_point]]
+    #     if heat > max_heat:
+    #         max_heat = heat
+    #     heatmap[grid_point] = heat
+    #     if heat < min_heat:
+    #         results.clear()
+    #         results.append(grid_point)
+    #         min_heat = heat
+    #     elif heat == min_heat:
+    #         results.append(grid_point)
+
+    # # print(max_heat)
+
+    # helpers.clear() #clear list
+    # for grid_point in grid_points: #visualize empty grid points
+    #     x, y = grid_point
+    #     temp = VisualElement("Heat Tile", x, y, 10, 10)
+    #     if max_heat > 0:
+    #         cold_ratio = (max_heat - heatmap[grid_point]) / max_heat
+    #         # pass
+    #         # print(heatmap[grid_point]/max_heat)
+    #         # print(f"{heatmap[grid_point]} / {max_heat}, {int(255 * (heatmap[grid_point]/max_heat))}")
+    #         temp.pygame_color = pygame.Color(int(125 * cold_ratio), int(125 * cold_ratio), int(255 * cold_ratio), 100)
+    #         # temp.pygame_color = pygame.Color(125, 125, heatmap[grid_point], 100)
+    #     # else:
+    #     #     temp.pygame_color = pygame.Color(125, 125, 0, 100)
+    #         helpers.append(temp)
+
+    # return results
+
     results = []
     tree = None
     # Create a KD-Tree with values for fast detection (README: Could probably use this for normal collision checking?)
