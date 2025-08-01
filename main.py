@@ -330,7 +330,21 @@ def cvoa_algo(player, objects):
                 score = euclidean_distance([player.x + dir_x, player.y + dir_y], [center_x, center_y])
                 if (direction_scores[dir] > score):
                     direction_scores[dir] = score
-        max_t_velocity = min(direction_scores, key=direction_scores.get)
+        
+        dist = float('inf')
+        dirs = []
+        for key, value in direction_scores.items():
+            if value < dist:
+                dirs.clear()
+                dirs.append(key)
+                dist = value
+            elif value == dist:
+                # print("SAME DIST?")
+                dirs.append(key)
+        
+        max_t_velocity = random.choice(dirs)
+        # max_t_velocity = min(direction_scores, key=direction_scores.get)
+        # print("direction_scores", direction_scores, max_t_velocity)
 
     # Check for directions that have same value. NOTE: Can use this to add randomization?
     # for dir in MAX_FRAME_DIRS:
