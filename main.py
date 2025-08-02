@@ -172,25 +172,41 @@ def macrododging_algo(player, objects, grid_resolution=30):
     object_tree = None
     result = []
     if (len(vals) == 0): #if this is empty then the screen has no bullets left on it.
-        vals = grid_points
-        result = grid_points
-        object_tree = KDTree(vals)
+        # If there are no bullets (i.e. other collidable objs), then just return centroids based on grid
+        centroids, _ = kmeans(grid_points, 9)
+        return centroids
     else:
         object_tree = KDTree(vals)
 
     check_radius = player.height #64 16
 
     helpers.clear() #clear list
+    low_cnt = float('inf')
+    # Get grid point with lowest value (ideally this would be 0)
+    # Collect grid points with that same low value and return that as result
+    # The reason for doing it this way is that sometimes ALL the grid points have bullets near them
+    # So only checking for len() == 0 would cause an error.
     for grid_point in grid_points:
-        if len(object_tree.query_ball_point(grid_point, r=check_radius*2)) == 0:
-            x, y = grid_point
+        obj_cnt = len(object_tree.query_ball_point(grid_point, r=check_radius*2))
+        x, y = grid_point
+        if obj_cnt < low_cnt:
+            helpers.clear()
+            result.clear()
             temp = VisualElement("Grid Tile", x, y, 10, 10)
             temp.pygame_color = pygame.Color(125, 125, 255, 100)
             helpers.append(temp)
-            # helpers.append(VisualElement("Center", x, y, 10, 10))
+            result.append(grid_point)
+            low_cnt = obj_cnt
+        elif obj_cnt == low_cnt:
+            temp = VisualElement("Grid Tile", x, y, 10, 10)
+            temp.pygame_color = pygame.Color(125, 125, 255, 100)
+            helpers.append(temp)
             result.append(grid_point)
 
-    centroids, _ = kmeans(result, 9)
+    centers = 9
+    if len(result) < centers:
+        centers = len(result)
+    centroids, _ = kmeans(result, centers)
     # centroids = []
     # distortion_val = float('inf')
     # for num in range(1, 10):
@@ -582,8 +598,10 @@ def genetic_algo(data_set):
     # Determine fitness
     drop_num = int(len(data_set) * 0.25) # Drop lowest 25%
     elite_num = int(len(data_set) * 0.25) # Save top 25% as elites
-    # elites = []
+    elites = []
     lvl_set = []
+    set_size = len(data_set)
+    print("set size: ", set_size)
 
     # for each in lvl_set:
     #     print(each["seed"], end=" ")
@@ -598,25 +616,42 @@ def genetic_algo(data_set):
         data_set.pop(0)
 
     for _ in range(elite_num):
-        lvl_set.append(data_set.pop())
+        elite = data_set.pop()
+        lvl_set.append(elite)
+        elites.append(elite)
 
     random.seed(TIME.time())
 
+    # 25% -> Elites
+    # 75% -> Elite crossovers + Mutated level + New levels
+
     # 1. Crossover
-    while len(lvl_set) <= len(data_set):
+    while len(lvl_set) < set_size:
         lvl1 = random.choice(data_set)      # Mix randomly between "good" generations
-        data_set.remove(lvl1)
-        # lvl1 = data_set.pop(-1)           # Mix only strongest
-        lvl2 = random.choice(data_set)
-        while lvl2 == lvl1:
-            lvl2 = random.choice(data_set)
-        data_set.append(lvl1)
-        # lvl1 = lvl1["lvl"]
-        # lvl2 = lvl2["lvl"]
-        cross_lvl = lvl1.crossover(lvl2)
-        # cross_lvl = crossover(lvl1, lvl2)
-        lvl_set.append(cross_lvl)
-    
+        # data_set.remove(lvl1)
+        
+        # Choose random other level
+        # lvl2 = random.choice(data_set)
+        # while lvl2 == lvl1:
+        #     lvl2 = random.choice(data_set)
+        # data_set.append(lvl1)
+        # cross_lvl = lvl1.crossover(lvl2)
+        # lvl_set.append(cross_lvl)
+
+        if random.random() >= lvl1.bad_ratio and len(data_set) != 0:
+            # Crossover level with randomly chosen elite
+            elite = random.choice(elites)
+            cross_lvl = elite.crossover(lvl1)
+            lvl_set.append(cross_lvl)
+        #elif ___:
+        #   Mutate()
+        else:
+            # Create new lvl
+            lvl1 = Level()
+            lvl1.generate()
+            lvl_set.append(lvl1)
+
+
     # 2. Mutation
 
     return lvl_set

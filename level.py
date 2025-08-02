@@ -17,6 +17,9 @@ class Level:
         # Log surivival time of weak and strong players
         self.weak_times = []
         self.strg_times = []
+        self.ratio_weak_alive = 0
+        self.ratio_strg_alive = 0
+        self.bad_ratio = 0
 
         # Log how many collided + how many in total
         self.total_weak = 0
@@ -36,6 +39,16 @@ class Level:
         # Sets the avg + other stats if necessary
         self.weak_time_avg = sum(self.weak_times) / self.total_weak
         self.strg_time_avg = sum(self.strg_times) / self.total_strg
+
+        # Calculate ratio of weak to strong dead/alive
+        self.ratio_weak_alive = (self.total_weak - self.weak_dead) / self.total_weak
+        self.ratio_strg_alive = (self.total_strg - self.strg_dead) / self.total_strg
+
+        # Calculate replacement ratio
+        if self.ratio_weak_alive > self.ratio_strg_alive:
+            self.bad_ratio = 1.0
+        else:
+            self.bad_ratio = self.ratio_weak_alive
 
     def generate(self, SCREEN_WIDTH=384):
         self.seed = TIME.time() # Set random seed
@@ -61,7 +74,11 @@ class Level:
         #   else, then add that amount of spawners to the level
         # 2. Change values in spawner entry
         #   Depending on the fitness of this level, tweak values of randomly selected spawner entries.
-        raise NotImplementedError
+        pass
+
+        self.calc_stats()
+
+        # raise NotImplementedError
 
     def selection(self):
         raise NotImplementedError
