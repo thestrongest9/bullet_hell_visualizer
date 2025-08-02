@@ -581,6 +581,9 @@ def genetic_algo(data_set):
 
     # Determine fitness
     drop_num = int(len(data_set) * 0.25) # Drop lowest 25%
+    elite_num = int(len(data_set) * 0.25) # Save top 25% as elites
+    # elites = []
+    lvl_set = []
 
     # for each in lvl_set:
     #     print(each["seed"], end=" ")
@@ -594,10 +597,12 @@ def genetic_algo(data_set):
     for _ in range(drop_num):
         data_set.pop(0)
 
+    for _ in range(elite_num):
+        lvl_set.append(data_set.pop())
+
     random.seed(TIME.time())
 
-    lvl_set = []
-
+    # 1. Crossover
     while len(lvl_set) <= len(data_set):
         lvl1 = random.choice(data_set)      # Mix randomly between "good" generations
         data_set.remove(lvl1)
@@ -611,15 +616,8 @@ def genetic_algo(data_set):
         cross_lvl = lvl1.crossover(lvl2)
         # cross_lvl = crossover(lvl1, lvl2)
         lvl_set.append(cross_lvl)
-
-    # print("\n")
-    # for each in lvl_set:
-    #     print(each["seed"], end=" ")
-    # print("\n")
-
-    # Crossover
-
-    # Mutation
+    
+    # 2. Mutation
 
     return lvl_set
 
@@ -692,10 +690,18 @@ def main():
             data_set.clear()
             # break
             for lvl in lvl_set:
-                process = multiprocessing.Process(target=play_lvl, args=(queue,lvl))
-                # process.start()
-                processes.append(process)
-            pass
+                if lvl.tested == False:
+                    process = multiprocessing.Process(target=play_lvl, args=(queue,lvl))
+                    # process.start()
+                    processes.append(process)
+                else:
+                    ratio_weak = (lvl.total_weak - lvl.weak_dead) / lvl.total_weak
+                    ratio_strg = (lvl.total_strg - lvl.strg_dead) / lvl.total_strg
+                    
+                    total_ratio_strg.append(ratio_strg)
+                    total_ratio_weak.append(ratio_weak)
+
+                    data_set.append(lvl)
 
 
     
