@@ -812,15 +812,19 @@ def main():
     data_set = []
     queue = multiprocessing.Queue()
     processes = []
+    running_processes = []
+    
+    levels_per_iteration = 8    # Number of levels per iteration
+    num_run_procs = 4           # Max number of levels being simultaneously at any time
 
     data_graph = Graph()
     total_ratio_weak = []
     total_ratio_strg = []
-    turn = 0
+    iteration = 0
 
-    for _ in range(4):
+    for _ in range(levels_per_iteration):
         process = multiprocessing.Process(target=play_lvl, args=(queue,))
-        process.start()
+        # process.start()
         processes.append(process)
         # TIME.sleep(1)
     # TIME.sleep(1)
@@ -828,28 +832,22 @@ def main():
     while goal == False:
         # print("HERE?")
         running_procs = False
-        for process in processes[::]:
-            if process.is_alive():
-                running_procs = True
-            else:
-                if process in processes:
-                    processes.remove(process)
+        if len(processes) > 0 or len(running_processes) > 0:
+            running_procs = True
+            if len(running_processes) < num_run_procs and len(processes) > 0:
+                process = processes.pop()
+                process.start()
+                running_processes.append(process)
+
+            if len(running_processes) > 0:
+                process = running_processes.pop(0)
+                if process.is_alive():
+                    running_processes.append(process)
 
         # GET from queue
         try:
             data = queue.get_nowait()
             data_set.append(data)
-            # print(data)
-
-            # for key in data.keys():
-            #     temp = ""
-            #     if key != "lvl":
-            #         temp += f"{key} : {data[key]} "
-            #     print(temp)
-            
-            # Ratio of "Alive:Total"
-            # ratio_weak = (data["total_weak"] - data["weak_dead"])/data["total_weak"]
-            # ratio_strong = (data["total_strong"] - data["strong_dead"])/data["total_strong"]
 
             ratio_weak = (data.total_weak - data.weak_dead) / data.total_weak
             ratio_strg = (data.total_strg - data.strg_dead) / data.total_strg
@@ -857,7 +855,7 @@ def main():
             total_ratio_strg.append(ratio_strg)
             total_ratio_weak.append(ratio_weak)
 
-            data_graph.update(turn, total_ratio_weak, total_ratio_strg)
+            data_graph.update(iteration, total_ratio_weak, total_ratio_strg)
 
             print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strg}")
 
@@ -867,9 +865,8 @@ def main():
 
         
         if running_procs == False:
-
-            data_graph.update(turn, total_ratio_weak, total_ratio_strg)
-            turn += 1
+            data_graph.update(iteration, total_ratio_weak, total_ratio_strg)
+            iteration += 1
 
             total_ratio_strg = []
             total_ratio_weak = []
@@ -879,7 +876,7 @@ def main():
             # break
             for lvl in lvl_set:
                 process = multiprocessing.Process(target=play_lvl, args=(queue,lvl))
-                process.start()
+                # process.start()
                 processes.append(process)
             pass
 
