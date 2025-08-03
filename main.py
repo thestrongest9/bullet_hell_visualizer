@@ -626,33 +626,28 @@ def genetic_algo(data_set):
     # 75% -> Elite crossovers + Mutated level + New levels
 
     # 1. Crossover
-    while len(lvl_set) < set_size:
-        lvl1 = random.choice(data_set)      # Mix randomly between "good" generations
-        # data_set.remove(lvl1)
-        
-        # Choose random other level
-        # lvl2 = random.choice(data_set)
-        # while lvl2 == lvl1:
-        #     lvl2 = random.choice(data_set)
-        # data_set.append(lvl1)
-        # cross_lvl = lvl1.crossover(lvl2)
-        # lvl_set.append(cross_lvl)
-
-        if random.random() >= lvl1.bad_ratio and len(data_set) != 0:
-            # Crossover level with randomly chosen elite
-            elite = random.choice(elites)
-            cross_lvl = elite.crossover(lvl1)
-            lvl_set.append(cross_lvl)
-        #elif ___:
-        #   Mutate()
-        else:
-            # Create new lvl
-            lvl1 = Level()
-            lvl1.generate()
-            lvl_set.append(lvl1)
-
-
-    # 2. Mutation
+    if len(data_set) == 0 or len(elites) == 0:
+        raise IndexError
+    else:
+        while len(lvl_set) < set_size:
+            lvl = random.choice(data_set)
+            if random.random() >= lvl.bad_ratio: # Determine via repalacement ratio
+                # 1. Crossover
+                # Crossover level with randomly chosen elite
+                elite = random.choice(elites)
+                cross_lvl = elite.crossover(lvl)
+                lvl_set.append(cross_lvl)
+            else:
+                elite = random.choice(elites)
+                if random.random() >= 0.5:
+                    # 2. Mutation
+                    lvl = elite.mutate(50)
+                else:
+                    # 3. Generation
+                    # Create new Level
+                    lvl = Level()
+                    lvl.generate()
+                    lvl_set.append(lvl)
 
     return lvl_set
 

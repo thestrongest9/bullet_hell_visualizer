@@ -64,7 +64,28 @@ class Level:
                 bullet_spawner.bullet_speed = random.uniform(0.5, 2)
                 self.dict[t] = bullet_spawner
 
-    def mutate(self):
+    def add_spawners(self, SCREEN_WIDTH):
+        # keys = lvl.dict.keys()
+        while True and self.spawner_cnt < 1000:
+            idx = random.randint(0, self.length)
+            if idx not in self.dict.keys():
+                x = random.randint(0, SCREEN_WIDTH)
+                bullet_spawner = Spawner(x, 0, 16, 16)
+                bullet_spawner.num_bullets = random.randint(1, 8)
+                bullet_spawner.bullet_speed = random.uniform(0.5, 2)
+                self.spawner_cnt += 1
+                self.dict[idx] = bullet_spawner
+                break
+
+    def rmv_spawners(self):
+        if self.spawner_cnt > 0:
+            keys = list(lvl.dict.keys())
+            idx = random.choice(keys)
+            del self.dict[idx]
+            keys.remove(idx)
+            self.spawner_cnt -= 1
+
+    def mutate(self, diff, SCREEN_WIDTH=384):
         # Mutation
         # Changes that can be made during mutation:
         # 1. Add/Remove spawner entries
@@ -74,11 +95,18 @@ class Level:
         #   else, then add that amount of spawners to the level
         # 2. Change values in spawner entry
         #   Depending on the fitness of this level, tweak values of randomly selected spawner entries.
-        pass
-
-        self.calc_stats()
-
-        # raise NotImplementedError
+        lvl = Level()
+        # Randomly get values of a range determined by diff.
+        # Negative to Positve, detemrines if spawners will
+        # be added or removed.
+        val = random.randint(-diff, diff)
+        
+        if val < 0:
+            for _ in range(diff):
+                lvl.rmv_spawners()
+        else:
+            for _ in range(diff):
+                lvl.add_spawners(SCREEN_WIDTH)
 
     def selection(self):
         raise NotImplementedError
