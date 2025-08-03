@@ -511,6 +511,7 @@ def play_lvl(queue, lvl=None):
     # return data
     try:
         lvl.tested = True
+        lvl.calc_stats()
         queue.put_nowait(lvl)
     except:
         print("ERROR IN PUT IN QUEUE")
@@ -665,6 +666,11 @@ def main():
     data_graph = Graph()
     total_ratio_weak = []
     total_ratio_strg = []
+
+    alive_time_graph = Graph()
+    total_time_strg = []
+    total_time_weak = []
+
     iteration = 0
 
     for _ in range(levels_per_iteration):
@@ -702,6 +708,12 @@ def main():
 
             data_graph.update(iteration, total_ratio_weak, total_ratio_strg)
 
+            total_time_strg.append(data.strg_time_avg)
+            total_time_weak.append(data.weak_time_avg)
+            # print("TOTAL TIME STRG: ", total_time_strg)
+
+            alive_time_graph.update(iteration, total_time_weak, total_time_strg)
+
             print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strg}")
 
             # FIXME: Need to save all results to some JSON file.
@@ -711,10 +723,15 @@ def main():
         
         if running_procs == False:
             data_graph.update(iteration, total_ratio_weak, total_ratio_strg)
+            alive_time_graph.update(iteration, total_time_weak, total_time_strg)
             iteration += 1
 
+            # Reset round graphs
             total_ratio_strg = []
             total_ratio_weak = []
+
+            total_time_strg = []
+            total_time_weak = []
 
             lvl_set = genetic_algo(data_set)
             data_set.clear()
@@ -725,11 +742,10 @@ def main():
                     # process.start()
                     processes.append(process)
                 else:
-                    ratio_weak = (lvl.total_weak - lvl.weak_dead) / lvl.total_weak
-                    ratio_strg = (lvl.total_strg - lvl.strg_dead) / lvl.total_strg
-                    
-                    total_ratio_strg.append(ratio_strg)
-                    total_ratio_weak.append(ratio_weak)
+                    total_ratio_strg.append(lvl.ratio_strg_alive)
+                    total_ratio_weak.append(lvl.ratio_weak_alive)
+                    total_time_strg.append(lvl.strg_time_avg)
+                    total_time_weak.append(lvl.weak_time_avg)
 
                     data_set.append(lvl)
 
