@@ -7,6 +7,7 @@ class Graph:
         self.fig, self.ax = plt.subplots()
         # self.ax.set_xlim(0, 10)
         self.ax.set_ylim(0, 1)
+        self.ylimit = 1
 
         self.weak_values = []
         self.strg_values = []
@@ -20,6 +21,10 @@ class Graph:
     def update(self, turn, weak_data, strg_data):
         weak_avg = sum(weak_data) / len(weak_data)
         strg_avg = sum(strg_data) / len(strg_data)
+
+        if weak_avg > self.ylimit or strg_avg > self.ylimit:
+            self.ylimit = strg_avg if strg_avg > weak_avg else weak_avg
+            self.ax.set_ylim(0, self.ylimit)
 
         if self.turns == [] or self.turns[-1]+1 == turn:
             self.weak_values.append(weak_avg)
