@@ -3,6 +3,7 @@ from graphics import *  # very basic graphics API #NOTE: Remember to do "pip ins
 # graphics.py documentation: https://mcsp.wartburg.edu/zelle/python/graphics/graphics.pdf
 
 import sys, os, pygame, re, random
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'  # Suppress Pygame init message
 import numpy as np
 from copy import copy, deepcopy
 
@@ -232,7 +233,7 @@ def cvoa_algo(player, objects):
     multiplier = 2
     #FIXME: Need to have (0, 0) option at top. or else starts moving. Need to fix somehow.
     possible_velocities = [
-        # ( 0 * multiplier,  0 * multiplier), #stand still
+        ( 0 * multiplier,  0 * multiplier), #stand still
         # ( 0 * multiplier, -1 * multiplier), #up
         # (-1 * multiplier, -1 * multiplier), #upleft
         # ( 1 * multiplier, -1 * multiplier), #upright
@@ -244,18 +245,18 @@ def cvoa_algo(player, objects):
         # ( 0 * multiplier,  0 * multiplier), #stand still
         #Without multiplier
         ( 0, -1), #up
-        (-1, -1), #upleft
-        ( 1, -1), #upright
         ( 0,  1), #down
-        (-1,  1), #downleft
-        ( 1,  1), #downright
         (-1,  0), #left
         ( 1,  0), #right
+        (-1, -1), #upleft
+        ( 1, -1), #upright
+        (-1,  1), #downleft
+        ( 1,  1), #downright
     ]
 
     if player.strength == "weak":
         possible_velocities = [
-            # ( 0 * multiplier,  0 * multiplier), #stand still
+            ( 0 * multiplier,  0 * multiplier), #stand still
             # ( 0 * multiplier, -1 * multiplier), #up
             # ( 0 * multiplier,  1 * multiplier), #down
             # (-1 * multiplier,  0 * multiplier), #left
@@ -266,6 +267,10 @@ def cvoa_algo(player, objects):
             ( 0,  1), #down
             (-1,  0), #left
             ( 1,  0), #right
+            # (-1, -1), #upleft
+            # ( 1, -1), #upright
+            # (-1,  1), #downleft
+            # ( 1,  1), #downright
         ]
     
     CHECK_FRAMES = 16 #20 #amount of frames to check for collision
@@ -302,6 +307,9 @@ def cvoa_algo(player, objects):
     # print(MAX_FRAME_DIRS, MAX_FRAMES)
 
     direction_scores = {}
+
+    # suboptimal_move_chance = 0.05 if player.strength == "strong" else 0.5
+
     # Epsilon greedy
     if random.random() <= 0.05:
         max_t_velocity = random.choice(list(MAX_FRAME_DIRS))
@@ -355,43 +363,6 @@ def cvoa_algo(player, objects):
 
     dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": MAX_FRAMES}
     return dictionary
-
-#CHROMOSOME = [TIME] :: [PREFAB][POSITION][#BULLETS][SPEED]
-#Prefab spawners
-X = Spawner(0, 0, 16, 16)
-Y = Spawner(0, 0, 16, 16)
-def lvl_generator(time=1000, seed=TIME.time()):
-    global X
-    global Y
-
-    # Create the dictionary for a level
-    lvl = dict()
-    # random.seed(10)
-    # seed = TIME.time()
-    # seed = 1751870909.2743487
-    random.seed(seed)
-    print(f"Seed used: {seed}")
-
-    # max_bullets = 50 # FIXME: Need to somehow make better max limitation?  
-
-    # Go through each timestep, and determine whether or not to spawn bullets
-    for x in range(0, time+1):
-        if random.random() >= 0.85: #0.85
-            prefabs = [X,Y]
-            # bullet_spawner = prefabs[random.randint(0, len(prefabs)-1)]
-            bullet_spawner = Spawner(0, 0, 16, 16)
-            bullet_spawner.x = random.randint(0, SCREEN_WIDTH)
-                                                                    #randomly decide:
-            bullet_spawner.num_bullets = random.randint(1, 8)       #1. Number of bullets per spawner
-            bullet_spawner.bullet_speed = random.uniform(0.5, 2)    #2. The speed of bullet
-            lvl[x] = bullet_spawner                                 #Then place bullet spawner at timestep (x)
-
-            # max_bullets -= bullet_spawner.num_bullets
-
-            # return bullet_spawner.spawn_circular_bullets(8, 1)
-        # else:
-        #     max_bullets += 5
-    return lvl
 
 def create_players(num_weak=1, num_strong=1):
     created_players = []
@@ -447,6 +418,7 @@ def play_lvl(queue, lvl=None):
         # print(TOTAL_TICKS)
         renderer_pygame(surface, clock, players, game_objects, helpers)
 
+        # Spawn bullets
         if TOTAL_TICKS in lvl.dict.keys():
             temp_spawner = lvl.dict[TOTAL_TICKS] # Get spawner(s) at this specific tick
             game_objects.extend(temp_spawner.spawn_circular_bullets(temp_spawner.num_bullets, temp_spawner.bullet_speed)) # Use the spawners
@@ -602,7 +574,7 @@ def genetic_algo(data_set):
     elites = []
     lvl_set = []
     set_size = len(data_set)
-    print("set size: ", set_size)
+    # print("set size: ", set_size)
 
     # for each in lvl_set:
     #     print(each["seed"], end=" ")
@@ -625,6 +597,8 @@ def genetic_algo(data_set):
 
     # 25% -> Elites
     # 75% -> Elite crossovers + Mutated level + New levels
+
+    print("set size: ", set_size)
 
     # 1. Crossover
     if len(data_set) == 0 or len(elites) == 0:
@@ -682,6 +656,8 @@ def main():
     goal = False
     while goal == False:
         # print("HERE?")
+
+        # Start new processes if capacity exists.
         running_procs = False
         if len(processes) > 0 or len(running_processes) > 0:
             running_procs = True
@@ -690,10 +666,22 @@ def main():
                 process.start()
                 running_processes.append(process)
 
-            if len(running_processes) > 0:
-                process = running_processes.pop(0)
-                if process.is_alive():
-                    running_processes.append(process)
+        #     if len(running_processes) > 0:
+        #         process = running_processes.pop(0)
+        #         if process.is_alive():
+        #             running_processes.append(process)
+        # elif len(processes) == 0 and len(running_processes) == 0: #NOTE: In practice this should never happen
+        #     print("ERROR: Both processes and running processes empty?")
+        #     break;
+
+        # Check running processes.
+        still_running = []
+        for process in running_processes:
+            if process.is_alive():
+                still_running.append(process) # This process is still working.
+            else:
+                process.join(timeout=0.1) # Cleanup finishes process otherwise.
+        running_processes = still_running # Preserve processes that are still alive.
 
         # GET from queue
         try:
@@ -718,6 +706,8 @@ def main():
 
             # FIXME: Need to save all results to some JSON file.
         except:
+            if len(running_processes) == 0:
+                print("ERROR: Nothing returned, nothing running")
             pass
 
         
