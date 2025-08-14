@@ -269,16 +269,7 @@ def cvoa_algo(player, objects):
     #FIXME: Need to have (0, 0) option at top. or else starts moving. Need to fix somehow.
     possible_velocities = [
         ( 0 * multiplier,  0 * multiplier), #stand still
-        # ( 0 * multiplier, -1 * multiplier), #up
-        # (-1 * multiplier, -1 * multiplier), #upleft
-        # ( 1 * multiplier, -1 * multiplier), #upright
-        # ( 0 * multiplier,  1 * multiplier), #down
-        # (-1 * multiplier,  1 * multiplier), #downleft
-        # ( 1 * multiplier,  1 * multiplier), #downright
-        # (-1 * multiplier,  0 * multiplier), #left
-        # ( 1 * multiplier,  0 * multiplier), #right
-        # ( 0 * multiplier,  0 * multiplier), #stand still
-        #Without multiplier
+        # Cardinal + diagonal
         ( 0, -1), #up
         ( 0,  1), #down
         (-1,  0), #left
@@ -292,20 +283,11 @@ def cvoa_algo(player, objects):
     if player.strength == "weak":
         possible_velocities = [
             ( 0 * multiplier,  0 * multiplier), #stand still
-            # ( 0 * multiplier, -1 * multiplier), #up
-            # ( 0 * multiplier,  1 * multiplier), #down
-            # (-1 * multiplier,  0 * multiplier), #left
-            # ( 1 * multiplier,  0 * multiplier), #right
-            # ( 0 * multiplier,  0 * multiplier), #stand still
-            #Without multiplier
+            # Only cardinal directions
             ( 0, -1), #up
             ( 0,  1), #down
             (-1,  0), #left
             ( 1,  0), #right
-            # (-1, -1), #upleft
-            # ( 1, -1), #upright
-            # (-1,  1), #downleft
-            # ( 1,  1), #downright
         ]
     
     CHECK_FRAMES = 16 #20 #amount of frames to check for collision
@@ -316,11 +298,8 @@ def cvoa_algo(player, objects):
         dir_collision[each] = CHECK_FRAMES
     
     #somehow also need to choose "best available" if no good decisions are available
-    # safe_velocities = possible_velocities.copy()
-    # max_t_velocity = possible_velocities[random.randint(0, len(possible_velocities)-1)]
     max_t_velocity = possible_velocities[0]
 
-    # MAX_FRAMES = CHECK_FRAMES + 1
     MAX_FRAME_DIRS = []
 
     MAX_FRAMES = -1
@@ -338,8 +317,6 @@ def cvoa_algo(player, objects):
             MAX_FRAMES = dir_collision[v]
         elif dir_collision[v] == MAX_FRAMES:
             MAX_FRAME_DIRS.append(v)
-
-    # print(MAX_FRAME_DIRS, MAX_FRAMES)
 
     direction_scores = {}
 
@@ -377,25 +354,11 @@ def cvoa_algo(player, objects):
                 dirs.append(key)
                 dist = value
             elif value == dist:
-                # print("SAME DIST?")
                 dirs.append(key)
         
         max_t_velocity = random.choice(dirs)
-        # max_t_velocity = min(direction_scores, key=direction_scores.get)
-        # print("direction_scores", direction_scores, max_t_velocity)
-
-    # Check for directions that have same value. NOTE: Can use this to add randomization?
-    # for dir in MAX_FRAME_DIRS:
-    #     if dir != max_t_velocity and (direction_scores[dir] == direction_scores[max_t_velocity]):
-    #         print (f"Same distance for {max_t_velocity} {dir} for player {player.name}")
-    # print ("Check values: ", direction_scores)
-    # print ("Result: ", max_t_velocity)
-
+        
     MAX_FRAMES = dir_collision[max_t_velocity]
-
-    # print("MAX_FRAMES: ", MAX_FRAMES, void_centers, dir_collision)
-
-    # MAX_FRAMES = 16
 
     dictionary = {"REWIND": False, "TICKS": None, "PLAYER_MOVEMENT": max_t_velocity, "MAX_FRAMES": MAX_FRAMES}
     return dictionary
@@ -425,13 +388,6 @@ def play_lvl(queue, lvl=None):
 
     #Use pygame renderer
     surface, clock = pygame_init(SCREEN_WIDTH, SCREEN_HEIGHT)
-    # renderer_pygame(surface, clock, players, game_objects, helpers)
-    
-    # Generate the level
-    # seed = TIME.time()
-    # lvl_length = 1000
-    # if lvl == None:
-    #     lvl = lvl_generator(lvl_length, seed)
     
     lvl_length = 1000
     if lvl == None:
@@ -490,21 +446,9 @@ def play_lvl(queue, lvl=None):
     pygame.quit() 
     
     # When simulation is finished (i.e. no other objects other than players)
-    # Analyze results:
-    # data = dict()
-
-    # data["weak_times"] = []
-    # data["strong_times"] = []
-    # data["weak_dead"] = 0
-    # data["strong_dead"] = 0
-    # data["seed"] = seed # FIXME: Need to do this to something else.
-    # data["total_weak"] = total_weak
-    # data["total_strong"] = total_strong
+    # analyze results
     lvl.total_strg = total_strong
     lvl.total_weak = total_weak
-    # if "lvl" not in data.keys():
-    #     data["lvl"] = lvl
-    #FIXME: Need some way of storing level data?
 
     for player in all_players:
         if player.strength == "weak":
@@ -515,8 +459,7 @@ def play_lvl(queue, lvl=None):
             lvl.strg_times.append(player.TIME_ALIVE)
             if player not in players:
                 lvl.strg_dead += 1
-
-    # return data
+    # Send back data to process queue
     try:
         lvl.tested = True
         lvl.calc_stats()
@@ -530,11 +473,9 @@ def movement(players, objects):
     for player in players:
         if type(player) is Entity:  # do player movement stuff
             x, y = player.cvoa_return_dict["PLAYER_MOVEMENT"] #Get player inputs
-
-            # print(f"{x}, {y}, {player.name}")
-
+            
             # STOP player from moving outside of bounds
-            #FIXME: Make this variable
+            # FIXME: Make this variable
             if player.x + x >= 384 or player.x + x <= 0:
                 x = 0
             if player.y + y >= 448 or player.y + y <= 0:
@@ -548,7 +489,6 @@ def movement(players, objects):
         if type(object) is Entity:  # bullets and misc
             if object.type == "Player":  # skip player
                 objects.append(object)
-                # continue
             else:  # check everything else
                 object.movement(object.velocity_x, object.velocity_y)
                 if object.check_outside_play_area() == False:
@@ -588,19 +528,8 @@ def game_collision(players, objects):
     return only_players
     
 def genetic_algo(data_set):
-    # data["weak_times"] = []
-    # data["strong_times"] = []
-    # data["weak_dead"] = 0
-    # data["strong_dead"] = 0
-    # data["seed"] = seed
-    # data["total_weak"] = total_weak
-    # data["total_strong"] = total_strong
-    # data["lvl"] = lvl
 
-    # total_lvls = len(data_set)
-    # for lvl in data_set:
-    #     lvl["weak_time_avg"] = sum(lvl["weak_times"]) / len(lvl["weak_times"])
-    #     lvl["strong_time_avg"] = sum(lvl["strong_times"]) / len(lvl["strong_times"])
+    # Internally calculate stat for level
     for lvl in data_set:
         lvl.calc_stats()
 
@@ -610,20 +539,15 @@ def genetic_algo(data_set):
     elites = []
     lvl_set = []
     set_size = len(data_set)
-    # print("set size: ", set_size)
 
-    # for each in lvl_set:
-    #     print(each["seed"], end=" ")
-
-    # Fitness Function:
-    data_set = sorted(data_set, key=lambda lvl: lvl.strg_time_avg - lvl.weak_time_avg)
-    # data_set = sorted(data_set, key=lambda lvl: lvl["weak_dead"] - lvl["strong_dead"])
-    # data_set = sorted(data_set, key=lambda lvl: lvl["strong_time_avg"])
+    # Fitness Function = AVG STRONG TIME - AVG WEAK TIME
+    data_set = sorted(data_set, key=lambda lvl: lvl.strg_time_avg - lvl.weak_time_avg) # Sort by fitness value
 
     # Remove bottom 25%
     for _ in range(drop_num):
         data_set.pop(0)
 
+    # Keep top 25% as elites
     for _ in range(elite_num):
         elite = data_set.pop()
         lvl_set.append(elite)
@@ -632,9 +556,10 @@ def genetic_algo(data_set):
     random.seed(TIME.time())
 
     # 25% -> Elites
-    # 75% -> Elite crossovers + Mutated level + New levels
+    # 50% -> Elite crossovers + Mutated level + New levels
+    # 25% -> Dropped
 
-    print("set size: ", set_size)
+    # print("set size: ", set_size)
 
     # 1. Crossover
     if len(data_set) == 0 or len(elites) == 0:
@@ -683,16 +608,13 @@ def main():
 
     iteration = 0
 
+    print(f"Start iteration: {iteration}")
+
     for _ in range(levels_per_iteration):
         process = multiprocessing.Process(target=play_lvl, args=(queue,))
-        # process.start()
         processes.append(process)
-        # TIME.sleep(1)
-    # TIME.sleep(1)
     goal = False
     while goal == False:
-        # print("HERE?")
-
         # Start new processes if capacity exists.
         running_procs = False
         if len(processes) > 0 or len(running_processes) > 0:
@@ -701,15 +623,6 @@ def main():
                 process = processes.pop()
                 process.start()
                 running_processes.append(process)
-
-        #     if len(running_processes) > 0:
-        #         process = running_processes.pop(0)
-        #         if process.is_alive():
-        #             running_processes.append(process)
-        # elif len(processes) == 0 and len(running_processes) == 0: #NOTE: In practice this should never happen
-        #     print("ERROR: Both processes and running processes empty?")
-        #     break;
-
         # Check running processes.
         still_running = []
         for process in running_processes:
@@ -742,8 +655,8 @@ def main():
 
             # FIXME: Need to save all results to some JSON file.
         except:
-            if len(running_processes) == 0:
-                print("ERROR: Nothing returned, nothing running")
+            # if len(running_processes) == 0:
+            #     print("Nothing returned, nothing running")
             pass
 
         
@@ -751,6 +664,7 @@ def main():
             data_graph.update(iteration, total_ratio_weak, total_ratio_strg)
             alive_time_graph.update(iteration, total_time_weak, total_time_strg)
             iteration += 1
+            print(f"Start iteration: {iteration}")
 
             # Reset round graphs
             total_ratio_strg = []
@@ -765,7 +679,6 @@ def main():
             for lvl in lvl_set:
                 if lvl.tested == False:
                     process = multiprocessing.Process(target=play_lvl, args=(queue,lvl))
-                    # process.start()
                     processes.append(process)
                 else:
                     total_ratio_strg.append(lvl.ratio_strg_alive)
