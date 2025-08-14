@@ -2,6 +2,14 @@ import time as TIME
 import random
 from entity import Spawner
 
+def clamp(val, min_val, max_val):
+    if val <= min_val:
+        return min_val
+    elif val >= max_val:
+        return max_val
+    else:
+        return val
+
 class Level:
     # NOTE: Stagnation avoidance tactics
     # Dynamic Mutation Rate
@@ -35,6 +43,9 @@ class Level:
 
         self.spawner_cnt = 0
 
+        self.SCREEN_WIDTH = 384 # Size of screen
+        self.SCREEN_HEIGHT = 448
+
     def calc_stats(self):
         # Sets the avg + other stats if necessary
         self.weak_time_avg = sum(self.weak_times) / self.total_weak
@@ -45,37 +56,70 @@ class Level:
         self.ratio_strg_alive = (self.total_strg - self.strg_dead) / self.total_strg
 
         # Calculate replacement ratio
-        if self.ratio_weak_alive > self.ratio_strg_alive:
-            self.bad_ratio = 1.0
-        else:
-            self.bad_ratio = self.ratio_weak_alive
+        self.bad_ratio = (self.ratio_strg_alive + self.ratio_weak_alive) / 2
+        # if self.ratio_weak_alive > self.ratio_strg_alive:
+        #     self.bad_ratio = 1.0
+        # else:
+        #     self.bad_ratio = self.ratio_weak_alive
 
-    def generate(self, SCREEN_WIDTH=384):
+    def generate(self):
         self.seed = TIME.time() # Set random seed
         random.seed(self.seed)
 
-        for t in range(0, self.length+1):
-            if random.random() >= 0.85: # 0.85
-                self.spawner_cnt += 1
-                x = random.randint(0, SCREEN_WIDTH)
-                bullet_spawner = Spawner(x, 0, 16, 16)
+        bullet_cnt = []
 
-                bullet_spawner.num_bullets = random.randint(1, 8)
-                bullet_spawner.bullet_speed = random.uniform(0.5, 2)
+        previous_spawner = None
+
+        for t in range(0, self.length+1):
+
+            
+            
+            if random.random() >= 0.85:
+                self.spawner_cnt += 1
+                
+                if random.random() >= 0.85 or previous_spawner == None:
+                    x = random.randint(0, self.SCREEN_WIDTH)
+                    num_bullets = random.randint(1, 8)
+                    speed = random.uniform(1, 2)
+                else:
+                    x = previous_spawner.x + random.randint(-10, 10)
+                    
+                    num_bullets = previous_spawner.num_bullets + random.randint(-1, 1)
+                    # num_bullets = 1 if num_bullets <= 0 else num_bullets
+                    num_bullets = clamp(num_bullets, 1, 8)
+
+                    speed = previous_spawner.bullet_speed
+                    # speed = previous_spawner.bullet_speed + random.uniform(-0.1, 0.1)
+                    # speed = 1 if speed == 0 else speed
+                bullet_spawner = Spawner(x, 0, 16, 16)
+                bullet_spawner.num_bullets = num_bullets
+                bullet_spawner.bullet_speed = speed
                 self.dict[t] = bullet_spawner
 
-    def add_spawners(self, SCREEN_WIDTH):
-        # keys = lvl.dict.keys()
-        while True and self.spawner_cnt < 1000:
+                previous_spawner = bullet_spawner
+                
+
+    def get_new_key(self):
+        idx = random.randint(0, self.length)
+        while idx in self.dict.keys():
             idx = random.randint(0, self.length)
-            if idx not in self.dict.keys():
-                x = random.randint(0, SCREEN_WIDTH)
-                bullet_spawner = Spawner(x, 0, 16, 16)
-                bullet_spawner.num_bullets = random.randint(1, 8)
-                bullet_spawner.bullet_speed = random.uniform(0.5, 2)
-                self.spawner_cnt += 1
-                self.dict[idx] = bullet_spawner
-                break
+        return idx
+
+    def add_spawner(self, key=None, ):
+        # keys = lvl.dict.keys()
+        idx = 0
+        if self.spawner_cnt < 1000:
+            if key == None:
+                idx = self.get_new_key()
+            else:
+                idx = key
+
+            x = random.randint(0, self.SCREEN_WIDTH)
+            bullet_spawner = Spawner(x, 0, 16, 16)
+            bullet_spawner.num_bullets = random.randint(1, 8)
+            bullet_spawner.bullet_speed = random.uniform(0.5, 2)
+            self.spawner_cnt += 1
+            self.dict[idx] = bullet_spawner
 
     def rmv_spawners(self):
         if self.spawner_cnt > 0:
@@ -99,14 +143,25 @@ class Level:
         # Randomly get values of a range determined by diff.
         # Negative to Positve, detemrines if spawners will
         # be added or removed.
-        val = random.randint(-diff, diff)
+        val = random.randint(1, diff)
         
+        # self.ratio_weak_alive
+        # self.ratio_strg_alive
+
+        # if random.random() > self.ratio_weak_alive:
+        #     val *= -1
+
+        if self.ratio_strg_alive > self.ratio_weak_alive:
+            pass
+        else:
+            val *= -1
+
         if val < 0:
             for _ in range(diff):
                 lvl.rmv_spawners()
         else:
             for _ in range(diff):
-                lvl.add_spawners(SCREEN_WIDTH)
+                lvl.add_spawner(SCREEN_WIDTH)
 
     def selection(self):
         raise NotImplementedError
