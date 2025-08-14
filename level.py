@@ -99,7 +99,8 @@ class Level:
         return idx
 
     def add_spawner(self, key=None, ):
-        # keys = lvl.dict.keys()
+        random.seed(self.seed) # Set to same seed so that results are consistent.
+
         idx = 0
         if self.spawner_cnt < 1000:
             if key == None:
@@ -123,6 +124,8 @@ class Level:
             self.spawner_cnt -= 1
 
     def mutate(self, diff, SCREEN_WIDTH=384):
+        random.seed(self.seed) # Set to same seed so that results are consistent.
+
         # Mutation
         # Changes that can be made during mutation:
         # 1. Add/Remove spawner entries
@@ -154,7 +157,8 @@ class Level:
         raise NotImplementedError
 
     def crossover(self, othr, length=1000):
-        random.seed(TIME.time())
+        random.seed(self.seed) # Set to same seed so that results are consistent.
+
         cross_lvl = dict()
         spawner_cnt = 0
         target_cnt = (self.spawner_cnt + othr.spawner_cnt) / 2
