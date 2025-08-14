@@ -153,7 +153,7 @@ def macrododging_algo(player, objects, grid_resolution=30):
     global helpers
     
     global creating_grid #Set this to global
-    global grid_tree
+    # global grid_tree
     global grid_points
     xmin, xmax = SCREEN_WIDTH, 0
     ymin, ymax = SCREEN_HEIGHT, 0
@@ -163,7 +163,7 @@ def macrododging_algo(player, objects, grid_resolution=30):
             for j in range(grid_resolution):
                 y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
                 grid_points.append((x, y))
-        grid_tree = KDTree(grid_points)
+        # grid_tree = KDTree(grid_points)
         # print("Grid creation should fire only once.")
         creating_grid = True
 
@@ -204,23 +204,58 @@ def macrododging_algo(player, objects, grid_resolution=30):
             helpers.append(temp)
             result.append(grid_point)
 
+    empty_grid_tree = KDTree(result)
+
     centers = 9
     if len(result) < centers:
         centers = len(result)
     centroids, _ = kmeans(result, centers)
+    space_ratio = float('inf')
+    best_centroids = []
+    color_centroid = []
+
+    for centroid in centroids:
+        obj_cnt = len(object_tree.query_ball_point(centroid, r=128))
+        empty_grid_cnt = len(empty_grid_tree.query_ball_point(centroid, r=128))
+
+        empty_space_ratio = 0
+        if empty_grid_cnt != 0:
+            empty_space_ratio = obj_cnt / empty_grid_cnt
+
+        if empty_space_ratio < space_ratio:
+            best_centroids.clear()
+            color_centroid.clear()
+            best_centroids.append(centroid)
+            x, y = centroid
+            color_centroid.append((x,y))
+            space_ratio = empty_space_ratio
+        elif empty_space_ratio == space_ratio:
+            best_centroids.append(centroid)
+            x, y = centroid
+            color_centroid.append((x,y))
+
+
     # centroids = []
     # distortion_val = float('inf')
     # for num in range(1, 10):
-    #     temp, distortion = kmeans(result, num)
-    #     if distortion_val > distortion:
-    #         centroids = temp
-    #         distortion_val = distortion
+    #     try:
+    #         temp, distortion = kmeans(result, num)
+    #         if distortion_val > distortion:
+    #             centroids = temp
+    #             distortion_val = distortion
+    #     except:
+    #         pass
 
     for grid_point in centroids:
         x, y = grid_point
-        helpers.append(VisualElement("Center", x, y, 10, 10))
+        point = VisualElement("Center", x, y, 10, 10)
+        helpers.append(point)
+        # print(best_centroids)
+        if (x,y) in color_centroid:
+            point.pygame_color = pygame.Color(255, 0, 255, 100)
 
-    return centroids
+    # return centroids
+    return best_centroids
 
 def cvoa_algo(player, objects):
     # Constrained Velocity Obstacle Algorithm (misnomer, but whatever)
@@ -312,6 +347,7 @@ def cvoa_algo(player, objects):
 
     # Epsilon greedy
     if random.random() <= 0.05:
+    # if random.random() <= suboptimal_move_chance:
         max_t_velocity = random.choice(list(MAX_FRAME_DIRS))
     else:
         # Macrododging
