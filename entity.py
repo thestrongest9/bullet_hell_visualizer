@@ -278,6 +278,13 @@ class Spawner:
             # Calculate the velocity components for the bullet in the x and y directions
             bullet_velocity_x = math.cos(angle) * speed
             bullet_velocity_y = math.sin(angle) * speed
+
+            if bullet_velocity_x == 0 and bullet_velocity_y == 0: #if in the case the bullet just stands there, skip generating this one.
+                continue
+
+            if bullet_velocity_y < 0:
+                continue
+
             # Create a bullet entity at the center (self.x, self.y) with initial velocity
             bullet = Entity(
                 "Bullet", self.x, self.y, self.width, self.height, color="blue", type="Bullet"
