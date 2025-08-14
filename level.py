@@ -117,7 +117,7 @@ class Level:
 
     def rmv_spawners(self):
         if self.spawner_cnt > 0:
-            keys = list(lvl.dict.keys())
+            keys = list(self.lvl.dict.keys())
             idx = random.choice(keys)
             del self.dict[idx]
             keys.remove(idx)
