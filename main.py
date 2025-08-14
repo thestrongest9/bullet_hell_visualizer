@@ -642,7 +642,7 @@ def genetic_algo(data_set):
     else:
         while len(lvl_set) < set_size:
             lvl = random.choice(data_set)
-            if random.random() >= lvl.bad_ratio: # Determine via repalacement ratio
+            if random.random() >= lvl.total_survival_ratio: # Determine via repalacement ratio
                 # 1. Crossover
                 # Crossover level with randomly chosen elite
                 elite = random.choice(elites)

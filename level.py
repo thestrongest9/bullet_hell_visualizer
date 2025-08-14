@@ -27,7 +27,7 @@ class Level:
         self.strg_times = []
         self.ratio_weak_alive = 0
         self.ratio_strg_alive = 0
-        self.bad_ratio = 0
+        self.total_survival_ratio = 1
 
         # Log how many collided + how many in total
         self.total_weak = 0
@@ -55,12 +55,8 @@ class Level:
         self.ratio_weak_alive = (self.total_weak - self.weak_dead) / self.total_weak
         self.ratio_strg_alive = (self.total_strg - self.strg_dead) / self.total_strg
 
-        # Calculate replacement ratio
-        self.bad_ratio = (self.ratio_strg_alive + self.ratio_weak_alive) / 2
-        # if self.ratio_weak_alive > self.ratio_strg_alive:
-        #     self.bad_ratio = 1.0
-        # else:
-        #     self.bad_ratio = self.ratio_weak_alive
+        # Calculate total survival ratio
+        self.total_survival_ratio = (self.ratio_strg_alive + self.ratio_weak_alive) / 2
 
     def generate(self):
         self.seed = TIME.time() # Set random seed
@@ -85,12 +81,9 @@ class Level:
                     x = previous_spawner.x + random.randint(-10, 10)
                     
                     num_bullets = previous_spawner.num_bullets + random.randint(-1, 1)
-                    # num_bullets = 1 if num_bullets <= 0 else num_bullets
                     num_bullets = clamp(num_bullets, 1, 8)
 
                     speed = previous_spawner.bullet_speed
-                    # speed = previous_spawner.bullet_speed + random.uniform(-0.1, 0.1)
-                    # speed = 1 if speed == 0 else speed
                 bullet_spawner = Spawner(x, 0, 16, 16)
                 bullet_spawner.num_bullets = num_bullets
                 bullet_spawner.bullet_speed = speed
@@ -144,12 +137,6 @@ class Level:
         # Negative to Positve, detemrines if spawners will
         # be added or removed.
         val = random.randint(1, diff)
-        
-        # self.ratio_weak_alive
-        # self.ratio_strg_alive
-
-        # if random.random() > self.ratio_weak_alive:
-        #     val *= -1
 
         if self.ratio_strg_alive > self.ratio_weak_alive:
             pass
@@ -211,23 +198,3 @@ class Level:
         lvl = Level(cross_lvl)
         lvl.spawner_cnt = spawner_cnt
         return lvl
-
-        # for t in range(0, length+1):
-        #     obj1 = None
-        #     if t in self.dict.keys():
-        #         obj1 = self.dict[t]
-        #     obj2 = None
-        #     if t in othr.dict.keys():
-        #         obj1 = othr.dict[t]
-            
-        #     if obj1 == None and obj2 == None:
-        #         continue
-        #     else:
-        #         if random.random() >= 0.5:
-        #             if obj1 != None:
-        #                 cross_lvl[t] = obj1
-        #         else:
-        #             if obj2 != None:
-        #                 cross_lvl[t] = obj2
-        
-        # return Level(cross_lvl) # Return new level with crossed over data
