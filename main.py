@@ -147,7 +147,7 @@ def player_input(dictionary):
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-def macrododging_algo(player, objects, grid_resolution=30):
+def macrododging_algo(player, objects, grid_resolution=40, max_frames=1):
     #uses kd-trees to return positions far away from existing positions
     #should be relatively fast?
     global helpers
@@ -158,17 +158,20 @@ def macrododging_algo(player, objects, grid_resolution=30):
     xmin, xmax = SCREEN_WIDTH, 0
     ymin, ymax = SCREEN_HEIGHT, 0
     if grid_points == []:
-        for i in range(grid_resolution):
-            x = xmin + i * (xmax - xmin) / (grid_resolution - 1)
-            for j in range(grid_resolution):
-                y = ymin + j * (ymax - ymin) / (grid_resolution - 1)
+        x_grid_resolution = int(SCREEN_WIDTH / 16)
+        y_grid_resolution = int(SCREEN_HEIGHT / 16)
+        for i in range(x_grid_resolution):
+            x = xmin + i * (xmax - xmin) / (x_grid_resolution - 1)
+            for j in range(y_grid_resolution):
+                y = ymin + j * (ymax - ymin) / (y_grid_resolution - 1)
                 grid_points.append((x, y))
         # grid_tree = KDTree(grid_points)
         # print("Grid creation should fire only once.")
         creating_grid = True
 
     # filter objects to exclude "Player" type objects so that player positions will not effect output
-    vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.type != "Player"]
+    # vals = [(object.x,object.y) for object in objects if type(object) == Entity and object.type != "Player"]
+    vals = [object.bullet_next_move(max_frames) for object in objects if type(object) == Entity and object.type != "Player"]
 
     object_tree = None
     result = []
@@ -188,7 +191,7 @@ def macrododging_algo(player, objects, grid_resolution=30):
     # The reason for doing it this way is that sometimes ALL the grid points have bullets near them
     # So only checking for len() == 0 would cause an error.
     for grid_point in grid_points:
-        obj_cnt = len(object_tree.query_ball_point(grid_point, r=check_radius*2))
+        obj_cnt = len(object_tree.query_ball_point(grid_point, r=check_radius * 1.5)) #check_radius*2
         x, y = grid_point
         if obj_cnt < low_cnt:
             helpers.clear()
@@ -210,52 +213,60 @@ def macrododging_algo(player, objects, grid_resolution=30):
     if len(result) < centers:
         centers = len(result)
     centroids, _ = kmeans(result, centers)
-    space_ratio = float('inf')
-    best_centroids = []
-    color_centroid = []
 
     for centroid in centroids:
-        obj_cnt = len(object_tree.query_ball_point(centroid, r=128))
-        empty_grid_cnt = len(empty_grid_tree.query_ball_point(centroid, r=128))
-
-        empty_space_ratio = 0
-        if empty_grid_cnt != 0:
-            empty_space_ratio = obj_cnt / empty_grid_cnt
-
-        if empty_space_ratio < space_ratio:
-            best_centroids.clear()
-            color_centroid.clear()
-            best_centroids.append(centroid)
-            x, y = centroid
-            color_centroid.append((x,y))
-            space_ratio = empty_space_ratio
-        elif empty_space_ratio == space_ratio:
-            best_centroids.append(centroid)
-            x, y = centroid
-            color_centroid.append((x,y))
-
-
-    # centroids = []
-    # distortion_val = float('inf')
-    # for num in range(1, 10):
-    #     try:
-    #         temp, distortion = kmeans(result, num)
-    #         if distortion_val > distortion:
-    #             centroids = temp
-    #             distortion_val = distortion
-    #     except:
-    #         pass
-
-    for grid_point in centroids:
-        x, y = grid_point
+        x, y = centroid
         point = VisualElement("Center", x, y, 10, 10)
         helpers.append(point)
-        # print(best_centroids)
-        if (x,y) in color_centroid:
-            point.pygame_color = pygame.Color(255, 0, 255, 100)
 
-    # return centroids
-    return best_centroids
+    return centroids
+
+    # space_ratio = float('inf')
+    # best_centroids = []
+    # color_centroid = []
+
+    # for centroid in centroids:
+    #     obj_cnt = len(object_tree.query_ball_point(centroid, r=128))
+    #     empty_grid_cnt = len(empty_grid_tree.query_ball_point(centroid, r=128))
+
+    #     empty_space_ratio = 0
+    #     if empty_grid_cnt != 0:
+    #         empty_space_ratio = obj_cnt / empty_grid_cnt
+
+    #     if empty_space_ratio < space_ratio:
+    #         best_centroids.clear()
+    #         color_centroid.clear()
+    #         best_centroids.append(centroid)
+    #         x, y = centroid
+    #         color_centroid.append((x,y))
+    #         space_ratio = empty_space_ratio
+    #     elif empty_space_ratio == space_ratio:
+    #         best_centroids.append(centroid)
+    #         x, y = centroid
+    #         color_centroid.append((x,y))
+
+
+    # # centroids = []
+    # # distortion_val = float('inf')
+    # # for num in range(1, 10):
+    # #     try:
+    # #         temp, distortion = kmeans(result, num)
+    # #         if distortion_val > distortion:
+    # #             centroids = temp
+    # #             distortion_val = distortion
+    # #     except:
+    # #         pass
+
+    # for grid_point in centroids:
+    #     x, y = grid_point
+    #     point = VisualElement("Center", x, y, 10, 10)
+    #     helpers.append(point)
+    #     # print(best_centroids)
+    #     if (x,y) in color_centroid:
+    #         point.pygame_color = pygame.Color(255, 0, 255, 100)
+
+    # # return centroids
+    # return best_centroids
 
 def cvoa_algo(player, objects):
     # Constrained Velocity Obstacle Algorithm (misnomer, but whatever)
@@ -330,7 +341,7 @@ def cvoa_algo(player, objects):
         # Macrododging
         #1) Calculate void centers from inverse clustering 
         # void_centers, _ = macrododging_algo(player, objects)
-        void_centers = macrododging_algo(player, objects)
+        void_centers = macrododging_algo(player, objects, 40, MAX_FRAMES)
         # void_centers = [(int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2))]
         #2) Calculate whichever direction will move to closest void center
         # dist = float('inf')
@@ -534,24 +545,43 @@ def genetic_algo(data_set):
         lvl.calc_stats()
 
     # Determine fitness
-    drop_num = int(len(data_set) * 0.25) # Drop lowest 25%
-    elite_num = int(len(data_set) * 0.25) # Save top 25% as elites
+    # drop_num = int(len(data_set) * 0.25) # Drop lowest 25%
+    # elite_num = int(len(data_set) * 0.25) # Save top 25% as elites
     elites = []
     lvl_set = []
     set_size = len(data_set)
 
     # Fitness Function = AVG STRONG TIME - AVG WEAK TIME
     data_set = sorted(data_set, key=lambda lvl: lvl.strg_time_avg - lvl.weak_time_avg) # Sort by fitness value
+    # data_set = sorted(data_set, key=lambda lvl: lvl.strg_time_avg * lvl.ratio_strg_alive - lvl.weak_time_avg * lvl.ratio_weak_alive) # Sort by fitness value
 
-    # Remove bottom 25%
-    for _ in range(drop_num):
-        data_set.pop(0)
+    # Take perfect levels and make them elites
+    for lvl in data_set[:]:
+        if lvl.ratio_weak_alive == 0 and lvl.ratio_strg_alive == 1:
+            elites.append(lvl)
+            data_set.remove(lvl)
 
-    # Keep top 25% as elites
-    for _ in range(elite_num):
-        elite = data_set.pop()
-        lvl_set.append(elite)
-        elites.append(elite)
+    if len(data_set) == 0:
+        return elites
+
+    # drop_num = int(len(data_set) * 0.5) if len(data_set) > 1 else 1# Drop lowest 50%
+    # elite_num = int(len(data_set) * 0.5) # Save top 50% as elites
+
+    divide_val = int(len(data_set) * 0.5)
+
+    # Keep Elites
+    elites.extend(data_set[divide_val:])
+    lvl_set.extend(elites)
+
+    # # Remove bottom 25%
+    # for _ in range(drop_num):
+    #     data_set.pop(0)
+
+    # # Keep top 25% as elites
+    # for _ in range(elite_num):
+    #     elite = data_set.pop()
+    #     lvl_set.append(elite)
+    #     elites.append(elite)
 
     random.seed(TIME.time())
 
@@ -561,29 +591,39 @@ def genetic_algo(data_set):
 
     # print("set size: ", set_size)
 
-    # 1. Crossover
     if len(data_set) == 0 or len(elites) == 0:
         raise IndexError
     else:
         while len(lvl_set) < set_size:
             lvl = random.choice(data_set)
-            if random.random() >= lvl.total_survival_ratio: # Determine via repalacement ratio
-                # 1. Crossover
-                # Crossover level with randomly chosen elite
+            # if random.random() >= lvl.total_survival_ratio: # Determine via repalacement ratio
+            if lvl.improvement():
+                # 
                 elite = random.choice(elites)
-                cross_lvl = elite.crossover(lvl)
-                lvl_set.append(cross_lvl)
-            else:
-                elite = random.choice(elites)
-                if random.random() >= 0.5:
-                    # 2. Mutation
-                    lvl = elite.mutate(50)
+                # # 1. Crossover
+                # # Crossover level with randomly chosen elite
+                # cross_lvl = elite.crossover(lvl)
+                # lvl_set.append(cross_lvl)
+
+                if random.random() > 0.5:
+                    # 1. Crossover
+                    # Crossover level with randomly chosen elite
+                    # cross_lvl = elite.crossover(lvl)
+                    cross_lvl = lvl.crossover(elite)
+                    lvl_set.append(cross_lvl)
+                    print("Crossover: ", cross_lvl.level_history)
                 else:
-                    # 3. Generation
-                    # Create new Level
-                    lvl = Level()
-                    lvl.generate()
-                    lvl_set.append(lvl)
+                    # 2. Mutation
+                    mutated_lvl = lvl.mutate(50, elites)
+                    lvl_set.append(mutated_lvl)
+                    print("Mutation: ", mutated_lvl.level_history)
+            else:
+                # 3. Generation
+                # Create new Level
+                new_lvl = Level()
+                new_lvl.generate()
+                lvl_set.append(new_lvl)
+                print("New Level: ", new_lvl.level_history)
 
     return lvl_set
 
@@ -651,7 +691,7 @@ def main():
 
             alive_time_graph.update(iteration, total_time_weak, total_time_strg)
 
-            print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strg}")
+            print(f"Weak stats: {ratio_weak}, Strong stats: {ratio_strg}, Level History: {data.level_history}")
 
             # FIXME: Need to save all results to some JSON file.
         except:

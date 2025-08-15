@@ -105,7 +105,7 @@ class Entity:
         self.y1 = self.y - self.height / 2
         self.y2 = self.y + self.height / 2
         # Move visual representation (graphics.py)
-        self.rect.move(dx, dy)
+        # self.rect.move(dx, dy)
         # print(dx, dy)
 
         # NOTE:  Below is strange. Because values being set aren't integers, the rendering is having trouble showing the results
@@ -114,6 +114,9 @@ class Entity:
         # Because the movements (for the bullets) aren't just integers, the regular move_ip (move in-place) doesn't function properly with Pygame's renderer.
         # Most likely something to do with pixel coordinates?
         # self.pygame_rect.move_ip(dx, dy)
+
+    def bullet_next_move(self, frames):
+        return (self.x + self.velocity_x * frames, self.y + self.velocity_y * frames)
 
     def check_outside_play_area(self, SCREEN_HEIGHT = 448, SCREEN_WIDTH = 384):
         if (self.x > SCREEN_WIDTH + self.width):
@@ -235,26 +238,26 @@ class collision_checker:
         # Maybe should add radius component?
         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
         # print("AABB VALUE", math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0)), self.height)
-        if (
-            math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
-            <= self.height
-        ):  # FIXME: circular distance isn't working
-            # print(f"Collision between {self.name} and {other.name}")
-            return True
-        else:
-            return False
+        # if (
+        #     math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
+        #     <= self.height
+        # ):  # FIXME: circular distance isn't working
+        #     # print(f"Collision between {self.name} and {other.name}")
+        #     return True
+        # else:
+        #     return False
 
         # # Ensure both objects have the necessary attributes (bounding box coordinates)
         # if not all(hasattr(other, attr) for attr in ['x1', 'y1', 'x2', 'y2']):
         #     return None  # `other` doesn't have the necessary attributes for collision detection
 
         # # Check if there's an overlap on both the X and Y axes (AABB collision detection)
-        # if (self.x2 >= other.x1 and self.x1 <= other.x2 and
-        #     self.y2 >= other.y1 and self.y1 <= other.y2):
-        #     # Collision detected
-        #     # print(f"Collision between {self.name} and {other.name}")
-        #     return True
-        # return False
+        if (self.x2 >= other.x1 and self.x1 <= other.x2 and
+            self.y2 >= other.y1 and self.y1 <= other.y2):
+            # Collision detected
+            # print(f"Collision between {self.name} and {other.name}")
+            return True
+        return False
 
 
 # This spawns bullet -- for now just have a very simple spawning pattern
