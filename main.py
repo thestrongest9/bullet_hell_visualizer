@@ -596,34 +596,28 @@ def genetic_algo(data_set):
     else:
         while len(lvl_set) < set_size:
             lvl = random.choice(data_set)
+            elite = random.choice(elites)
             # if random.random() >= lvl.total_survival_ratio: # Determine via repalacement ratio
             if lvl.improvement():
-                # 
-                elite = random.choice(elites)
-                # # 1. Crossover
-                # # Crossover level with randomly chosen elite
+                # 1. Crossover
+                # Crossover level with randomly chosen elite
                 # cross_lvl = elite.crossover(lvl)
-                # lvl_set.append(cross_lvl)
-
+                cross_lvl = lvl.crossover(elite)
+                lvl_set.append(cross_lvl)
+                print("Crossover: ", cross_lvl.level_history)
+            else:
                 if random.random() > 0.5:
-                    # 1. Crossover
-                    # Crossover level with randomly chosen elite
-                    # cross_lvl = elite.crossover(lvl)
-                    cross_lvl = lvl.crossover(elite)
-                    lvl_set.append(cross_lvl)
-                    print("Crossover: ", cross_lvl.level_history)
-                else:
                     # 2. Mutation
-                    mutated_lvl = lvl.mutate(50, elites)
+                    mutated_lvl = elite.mutate(50, elites)
                     lvl_set.append(mutated_lvl)
                     print("Mutation: ", mutated_lvl.level_history)
-            else:
-                # 3. Generation
-                # Create new Level
-                new_lvl = Level()
-                new_lvl.generate()
-                lvl_set.append(new_lvl)
-                print("New Level: ", new_lvl.level_history)
+                else:
+                    # 3. Generation
+                    # Create new Level
+                    new_lvl = Level()
+                    new_lvl.generate()
+                    lvl_set.append(new_lvl)
+                    print("New Level: ", new_lvl.level_history)
 
     return lvl_set
 
