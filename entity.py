@@ -238,26 +238,26 @@ class collision_checker:
         # Maybe should add radius component?
         # print("WTF", math.sqrt(math.pow(self.x-other.x, 2) + math.pow(self.y-other.y, 2)))
         # print("AABB VALUE", math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0)), self.height)
-        # if (
-        #     math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
-        #     <= self.height
-        # ):  # FIXME: circular distance isn't working
-        #     # print(f"Collision between {self.name} and {other.name}")
-        #     return True
-        # else:
-        #     return False
+        if (
+            math.sqrt(math.pow(self.x - other.x, 2.0) + math.pow(self.y - other.y, 2.0))
+            <= self.height
+        ):  # FIXME: circular distance isn't working
+            # print(f"Collision between {self.name} and {other.name}")
+            return True
+        else:
+            return False
 
         # # Ensure both objects have the necessary attributes (bounding box coordinates)
         # if not all(hasattr(other, attr) for attr in ['x1', 'y1', 'x2', 'y2']):
         #     return None  # `other` doesn't have the necessary attributes for collision detection
 
         # # Check if there's an overlap on both the X and Y axes (AABB collision detection)
-        if (self.x2 >= other.x1 and self.x1 <= other.x2 and
-            self.y2 >= other.y1 and self.y1 <= other.y2):
-            # Collision detected
-            # print(f"Collision between {self.name} and {other.name}")
-            return True
-        return False
+        # if (self.x2 >= other.x1 and self.x1 <= other.x2 and
+        #     self.y2 >= other.y1 and self.y1 <= other.y2):
+        #     # Collision detected
+        #     # print(f"Collision between {self.name} and {other.name}")
+        #     return True
+        # return False
 
 
 # This spawns bullet -- for now just have a very simple spawning pattern
