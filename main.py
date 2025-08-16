@@ -616,7 +616,9 @@ def genetic_algo(data_set):
                 elite = random.choice(elites)
                 if random.random() >= 0.5:
                     # 2. Mutation
-                    lvl = elite.mutate(50)
+                    # lvl = elite.mutate(50)
+                    mutated_lvl = elite.mutate(50)
+                    lvl_set.append(mutated_lvl)
                 else:
                     # 3. Generation
                     # Create new Level

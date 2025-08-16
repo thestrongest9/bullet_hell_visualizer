@@ -1,6 +1,7 @@
 import time as TIME
 import random
 from entity import Spawner
+import copy
 
 class Level:
     # NOTE: Stagnation avoidance tactics
@@ -79,7 +80,7 @@ class Level:
 
     def rmv_spawners(self):
         if self.spawner_cnt > 0:
-            keys = list(lvl.dict.keys())
+            keys = list(self.dict.keys())
             idx = random.choice(keys)
             del self.dict[idx]
             keys.remove(idx)
@@ -96,6 +97,9 @@ class Level:
         # 2. Change values in spawner entry
         #   Depending on the fitness of this level, tweak values of randomly selected spawner entries.
         lvl = Level()
+        lvl.dict = copy.deepcopy(self.dict)
+        lvl.spawner_cnt = self.spawner_cnt
+        lvl.seed = TIME.time() # Set random seed
         # Randomly get values of a range determined by diff.
         # Negative to Positve, detemrines if spawners will
         # be added or removed.
