@@ -598,7 +598,7 @@ def genetic_algo(data_set):
     # 25% -> Elites
     # 75% -> Elite crossovers + Mutated level + New levels
 
-    print("set size: ", set_size)
+    # print("set size: ", set_size)
 
     # 1. Crossover
     if len(data_set) == 0 or len(elites) == 0:
@@ -648,6 +648,8 @@ def main():
     total_time_weak = []
 
     iteration = 0
+
+    print(f"Start iteration: {iteration}")
 
     for _ in range(levels_per_iteration):
         process = multiprocessing.Process(target=play_lvl, args=(queue,))
@@ -717,6 +719,8 @@ def main():
             data_graph.update(iteration, total_ratio_weak, total_ratio_strg)
             alive_time_graph.update(iteration, total_time_weak, total_time_strg)
             iteration += 1
+
+            print(f"Start iteration: {iteration}")
 
             # Reset round graphs
             total_ratio_strg = []
