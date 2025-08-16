@@ -141,7 +141,7 @@ class Level:
     def mutate(self, diff, elites, SCREEN_WIDTH=384):
         # random.seed(self.seed) # Set to same seed so that results are consistent.
 
-        target_spawner_cnt = sum([elite.spawner_cnt for elite in elites]) / len(elites)
+        # target_spawner_cnt = sum([elite.spawner_cnt for elite in elites]) / len(elites)
 
         # Mutation
         # Changes that can be made during mutation:
@@ -159,10 +159,10 @@ class Level:
         # Randomly get values of a range determined by diff.
         # Negative to Positve, detemrines if spawners will
         # be added or removed.
-        if int(abs(self.spawner_cnt - target_spawner_cnt)) <= 1:
-            val = 1
-        else:
-            val = random.randint(1, int(abs(self.spawner_cnt - target_spawner_cnt)))
+        # if int(abs(self.spawner_cnt - target_spawner_cnt)) <= 1:
+        #     val = 1
+        # else:
+        #     val = random.randint(1, int(abs(self.spawner_cnt - target_spawner_cnt)))
         # val = random.randint(1, diff)
 
         # if self.ratio_strg_alive > self.ratio_weak_alive:
@@ -176,12 +176,23 @@ class Level:
         #     for _ in range(val):
         #         lvl.add_spawner(SCREEN_WIDTH)
 
-        if lvl.spawner_cnt > target_spawner_cnt:
-            for _ in range(val):
+        val = 0
+        while val == 0:
+            val = random.randint(-diff, diff)
+
+        if val < 0:
+            for _ in range(-val):
                 lvl.rmv_spawners()
         else:
             for _ in range(val):
                 lvl.add_spawner(SCREEN_WIDTH)
+
+        # if lvl.spawner_cnt > target_spawner_cnt:
+        #     for _ in range(val):
+        #         lvl.rmv_spawners()
+        # else:
+        #     for _ in range(val):
+        #         lvl.add_spawner(SCREEN_WIDTH)
 
         # temp = self.level_history[:]
         lvl.level_history = self.level_history[:]
