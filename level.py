@@ -65,18 +65,30 @@ class Level:
                 bullet_spawner.bullet_speed = random.uniform(0.5, 2)
                 self.dict[t] = bullet_spawner
 
-    def add_spawners(self, SCREEN_WIDTH):
-        # keys = lvl.dict.keys()
-        while True and self.spawner_cnt < 1000:
+    def get_new_key(self):
+        idx = random.randint(0, self.length)
+        while idx in self.dict.keys():
             idx = random.randint(0, self.length)
-            if idx not in self.dict.keys():
-                x = random.randint(0, SCREEN_WIDTH)
-                bullet_spawner = Spawner(x, 0, 16, 16)
-                bullet_spawner.num_bullets = random.randint(1, 8)
-                bullet_spawner.bullet_speed = random.uniform(0.5, 2)
-                self.spawner_cnt += 1
-                self.dict[idx] = bullet_spawner
-                break
+        return idx
+
+    def add_spawner(self, key=None):
+        # random.seed(self.seed) # Set to same seed so that results are consistent.
+
+        idx = 0
+        if self.spawner_cnt < 1000:
+            if key == None:
+                idx = self.get_new_key()
+            else:
+                idx = key
+
+            print(f"add_spawner idx={idx}")
+
+            x = random.randint(0, self.SCREEN_WIDTH)
+            bullet_spawner = Spawner(x, 0, 16, 16)
+            bullet_spawner.num_bullets = random.randint(1, 8)
+            bullet_spawner.bullet_speed = random.uniform(0.5, 2)
+            self.spawner_cnt += 1
+            self.dict[idx] = bullet_spawner
 
     def rmv_spawners(self):
         if self.spawner_cnt > 0:
