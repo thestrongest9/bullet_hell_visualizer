@@ -280,7 +280,7 @@ class Spawner:
             angle = math.radians(i * angle_step - 180)
             # Calculate the velocity components for the bullet in the x and y directions
             bullet_velocity_x = math.cos(angle) * speed
-            bullet_velocity_y = math.sin(angle) * speed
+            bullet_velocity_y = -math.sin(angle) * speed
 
             if bullet_velocity_x == 0 and bullet_velocity_y == 0: #if in the case the bullet just stands there, skip generating this one.
                 continue
