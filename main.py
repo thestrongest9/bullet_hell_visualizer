@@ -632,13 +632,17 @@ def main():
     levels_per_iteration = 8    # Number of levels per iteration
     num_run_procs = 4           # Max number of levels being simultaneously at any time
 
-    data_graph = Graph()
+    # Graph - Survival Rate
+    data_graph = Graph("Average Survival Rate", "Generation Number", "Surival Rate")
     total_ratio_weak = []
     total_ratio_strg = []
 
-    alive_time_graph = Graph()
+    # Graph - Survival Time
+    alive_time_graph = Graph("Average Survival Time", "Generation Number", "Time")
     total_time_strg = []
     total_time_weak = []
+
+    data_graphs = [data_graph, alive_time_graph]
 
     iteration = 0
 
@@ -698,6 +702,9 @@ def main():
             data_graph.update(iteration, total_ratio_weak, total_ratio_strg)
             alive_time_graph.update(iteration, total_time_weak, total_time_strg)
             iteration += 1
+            if (iteration >= 12):
+                print(f"Ending at iteration: {iteration-1}")
+                break
             print(f"Start iteration: {iteration}")
 
             # Reset round graphs
@@ -721,7 +728,10 @@ def main():
                     total_time_weak.append(lvl.weak_time_avg)
 
                     data_set.append(lvl)
-
+    
+    # Display the graphs at the end.
+    for graph in data_graphs:
+        graph.display()
 
     
 
