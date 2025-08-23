@@ -12,6 +12,8 @@ Included components include a renderer, human input control, and basic collision
 - **Pygame**
 - **graphics.py**
 - **numpy**
+- **scipy**
+- **matplotlib**
 
 ### Running
 
