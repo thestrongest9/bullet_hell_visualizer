@@ -2,11 +2,6 @@
 
 Simulation Environment for creating *Conditionally Solvable Bullet Hell Levels*.
 
-
-A simulation environment for a bullet hell game, so as to facilitate the generation of *conditionally solvable video game levels*.
-
-Included components include a renderer, human input control, and basic collision detection.
-
 ## Quick Introduction
 
 The Bullet Hell Visualizer project aims to create conditionally solvable levels for 'Bullet Hell' games, which are a subset of the Shoot'em Up (shmup) genre. Sets of levels are generated according to a genetic algorithm, then these generated levels are tested with "strong" and "weak" players.
@@ -29,9 +24,12 @@ Run the file **main.py** with **python main.py**.
 
 ### Usage
 
-
+The output of the program includes a live graph that updates as new results are evaluated. 
 
 ### Examples
+
+![Example of Generation](example1.png)
+![Example of Generation](example2.png)
 
 ## Structure
 
