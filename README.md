@@ -1,4 +1,4 @@
-# Conditional Bullet Hell Stage Generator
+# Conditional Shmup Level Generator
 
 Simulation Environment for creating *Conditionally Solvable Bullet Hell Levels*.
 
