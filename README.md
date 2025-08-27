@@ -40,7 +40,8 @@ The output of the program includes a live graph that updates as new results are 
 ## Structure
 
 The Bullet Hell Visualizer's code is broken into components:
-*Evaluator*
+***Evaluator***
+
 <img src="player_model.png" alt="drawing" width="350"/>
 <!-- ![Player Model](player_model.png) -->
 
@@ -62,7 +63,8 @@ These two strategies, Micrododging and Macrododging, are then combined into one 
 
 This forms our final player model.
 
-*Generator*
+***Generator***
+
 <img src="genetic_algorithm.png" alt="drawing" width="350"/>
 <!-- ![Genetic Algorithm](genetic_algorithm.png) -->
 
@@ -80,7 +82,8 @@ This combines a elite level with a non-elite level. Ideally, this would allow fo
 
 Note that the the genetic algorithm here has a strong focus on elitism, which can be noticeable in generations past the 15~20 mark where stagnation becomes more apparent.
 
-*Main loop that sequences the Evaluator and Generator*
+***Main loop that sequences the Evaluator and Generator***
+
 <img src="overall_design.png" alt="drawing" width="350"/>
 <!-- ![Overarching stucture](overall_design.png) -->
 
