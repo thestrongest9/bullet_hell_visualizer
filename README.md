@@ -28,8 +28,9 @@ The output of the program includes a live graph that updates as new results are 
 
 ### Examples
 
-![Example of Generation](example1.png)
-![Example of Generation](example2.png)
+<!-- ![Example of Generation](example1.png) -->
+<!-- ![Example of Generation](example2.png) -->
+<img src="example1.png" alt="drawing" width="250"/> <img src="example2.png" alt="drawing" width="250"/>
 <!-- ![Example Graph](12_round_graph_survival_rate.png) -->
 <!-- ![Example Graph](12_round_graph_survival_time.png) -->
 <img src="12_round_graph_survival_rate.png" alt="drawing" width="350"/> <img src="12_round_graph_survival_time.png" alt="drawing" width="350"/>
