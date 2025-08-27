@@ -39,7 +39,8 @@ The output of the program includes a live graph that updates as new results are 
 
 ## Structure
 
-The Bullet Hell Visualizer's code is broken into components:
+The Bullet Hell Visualizer's code is broken into several components:
+
 ***Evaluator***
 
 <img src="player_model.png" alt="drawing" width="350"/>
