@@ -1,4 +1,4 @@
-# Bullet Hell Visualizer
+# Conditional Bullet Hell Level Generator
 
 Simulation Environment for creating *Conditionally Solvable Bullet Hell Levels*.
 
