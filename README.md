@@ -36,7 +36,7 @@ Run the file **main.py** with **python main.py**.
 ## Structure
 
 The Bullet Hell Visualizer's code is broken into components:
-1. Evaluator
+**Evaluator**
 Levels are evaluated using a player model created based on strategies used by Bullet Hell gamers. There are many possible strategies that could have been chosen, however, only two are used here:
 - Micrododging
 “Micrododging” is a bullet hell concept that refers to a strategy where a player is [“precisely weaving your way through enemy projectiles, focusing on a small portion of the screen and threading yourself through the small openings in the pattern with delicate, subtle movements”](https://www.google.com/url?q=https://shmups.wiki/library/Help:Glossary%23Micrododging.2FMacrododging&sa=D&source=docs&ust=1756270386557237&usg=AOvVaw2KQ1ajQots4WoOJirbN4aP)
@@ -52,10 +52,31 @@ These two strategies, Micrododging and Macrododging are then combined into one c
 >If several different moves share the smallest distance, then randomly choose a move from the set of moves with the smallest distance.
 To make our final player model.
 
-2. Generator
-Via the use of a genetic algorithm, levels are genereated
+**Generator**
+Via the use of a genetic algorithm, a set of levels are generated based on the feedback given by the players.
+The key focus here is the average time differnce between how long the strong player vs weak players survived. Since the goal is to have levels solvable for one but not the other, the goal is to have this difference value grow.
+Furthermore, if a level has 100% strong player survive and 0% weak players survive, then regardless of the time difference this already fulfills our conditionality requirement, those levels that are like this, or have a high enough difference are added to a set of elites and preserved.
 
+There are three parts to the genetic algorithm:
+- Selection
+This is based on the difference between the average survival time for all strong vs weak players for that level.
+- Mutation
+This returns a mutated elite level.
+- Crossover
+This combines a elite level with a non-elite level. Ideally, this would allow for some stagnation avoidance.
+
+Note that the the genetic algorithm here has a strong focus on elitism, which can be noticeable in generations past the 15~20 mark where stagnation becomes more apparent.
+
+**Main loop that sequences the Evaluator and Generator**
+With the Evaluator and Generator component, the overarching flow of the program is as follows:
+1. At program start, randomly generate a set of levels.
+2. Pass a generated level to a single process, and run many simulations at once.
+3. In each simulation, two equal set of strong and weak players are simulated.
+4. Once simulation has been finished, the process sends the playtest data back to the main thread, and closes.
+5. If all levels in a set have been evaluated, then run the genetic algorithm based generator.
+6. Repeat steps #2~5 until program is stopped.
 
 ## Contributing
+Contributors are welcome?
 
-## License
+<!-- ## License -->
