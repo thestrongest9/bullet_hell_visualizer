@@ -30,14 +30,14 @@ The output of the program includes a live graph that updates as new results are 
 
 ![Example of Generation](example1.png)
 ![Example of Generation](example2.png)
-![Example Graph](12_round_graph_survival_rate.png)
+![Example Graph](12_round_graph_survival_rate.png =x100)
 ![Example Graph](12_round_graph_survival_time.png)
 
 ## Structure
 
 The Bullet Hell Visualizer's code is broken into components:
 **Evaluator**
-[Player Model](player_model.png)
+![Player Model](player_model.png)
 
 Levels are evaluated using a player model created based on strategies used by Bullet Hell gamers. There are many possible strategies that could have been chosen, however, only two are used here:
 - Micrododging
@@ -58,7 +58,7 @@ These two strategies, Micrododging and Macrododging, are then combined into one 
 This forms our final player model.
 
 **Generator**
-[Genetic Algorithm](genetic_algorithm.png)
+![Genetic Algorithm](genetic_algorithm.png)
 
 Via the use of a genetic algorithm, a set of levels are generated based on the feedback given by the players.
 The key focus here is the average time differnce between how long the strong player vs weak players survived. Since the goal is to have levels solvable for one but not the other, the goal is to have this difference value grow.
@@ -75,7 +75,7 @@ This combines a elite level with a non-elite level. Ideally, this would allow fo
 Note that the the genetic algorithm here has a strong focus on elitism, which can be noticeable in generations past the 15~20 mark where stagnation becomes more apparent.
 
 **Main loop that sequences the Evaluator and Generator**
-[Overarching stucture](overall_design.png)
+![Overarching stucture](overall_design.png)
 
 With the Evaluator and Generator component, the overarching flow of the program is as follows:
 1. At program start, randomly generate a set of levels.
