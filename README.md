@@ -31,8 +31,10 @@ The output of the program includes a live graph that updates as new results are 
 ![Example of Generation](example1.png)
 ![Example of Generation](example2.png)
 <!-- ![Example Graph](12_round_graph_survival_rate.png) -->
-<img src="12_round_graph_survival_rate.png" alt="drawing" width="50"/>
-![Example Graph](12_round_graph_survival_time.png)
+<img src="12_round_graph_survival_rate.png" alt="drawing" width="100"/>
+<!-- ![Example Graph](12_round_graph_survival_time.png) -->
+<img src="12_round_graph_survival_time.png" alt="drawing" width="100"/>
+
 
 ## Structure
 
