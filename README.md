@@ -1,9 +1,9 @@
 Conditionally Solvable Shmup Level Generation
 ============
 
-# Conditional Shmup Level Generator
+## What is this?
 
-Simulation Environment for creating *Conditionally Solvable Bullet Hell Levels*.
+This is a simulation environment for creating *Conditionally Solvable Bullet Hell Levels*.
 
 ## Quick Introduction
 
