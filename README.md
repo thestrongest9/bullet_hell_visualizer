@@ -5,9 +5,9 @@ Conditionally Solvable Shmup Level Generation
 
 This is a simulation environment for creating *Conditionally Solvable Bullet Hell Levels*.
 
-This project was completed as part of the Capstone requirement for the Master of Science in Computer Science program at the University of California, Santa Cruz.
+This project was completed as part of the Capstone requirement for the *Master of Science in Computer Science* program at the &*University of California, Santa Cruz*.
 
-You can find the paper [here.](https://docs.google.com/document/d/1CGHNiqmORgzvFs0mr9ere8B6aPoborV2L40MBNeO008/edit?usp=sharing)
+You can find the paper [here](https://docs.google.com/document/d/1CGHNiqmORgzvFs0mr9ere8B6aPoborV2L40MBNeO008/edit?usp=sharing).
 
 ## Quick Introduction
 
